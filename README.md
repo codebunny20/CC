@@ -1,2 +1,2 @@
-# CC
+# CC-calculator/unit converter
 
