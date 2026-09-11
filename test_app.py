@@ -11,6 +11,9 @@ class AppTests(unittest.TestCase):
         self.assertIn(b"Calculator + Converter", response.data)
         self.assertIn(b"Calculator", response.data)
         self.assertIn(b"Converter", response.data)
+        self.assertIn(b"Light", response.data)
+        self.assertIn(b"Dark", response.data)
+        self.assertIn(b"System", response.data)
         self.assertIn(b"Astronomical unit", response.data)
         self.assertIn(b"Decibel", response.data)
 

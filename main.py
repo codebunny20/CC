@@ -143,13 +143,57 @@ PAGE_TEMPLATE = """
         :root {
             color-scheme: light;
             --bg: #edf2f7;
+            --bg-spot-1: rgba(31, 122, 140, 0.22);
+            --bg-spot-2: rgba(11, 79, 108, 0.18);
             --panel: #ffffff;
+            --panel-strong: #f7fbfe;
             --ink: #102a43;
             --muted: #627d98;
             --accent: #1f7a8c;
             --accent-strong: #0b4f6c;
             --border: #d9e2ec;
             --shadow: 0 18px 45px rgba(16, 42, 67, 0.12);
+            --control-bg: #edf2f7;
+            --result-bg: #f8fcfd;
+            --result-border: #d6eef3;
+        }
+
+        body[data-theme="dark"] {
+            color-scheme: dark;
+            --bg: #08121f;
+            --bg-spot-1: rgba(35, 139, 164, 0.28);
+            --bg-spot-2: rgba(9, 90, 126, 0.26);
+            --panel: #0f1b2d;
+            --panel-strong: #13233a;
+            --ink: #e5eef8;
+            --muted: #9fb4ca;
+            --accent: #43b4c8;
+            --accent-strong: #2a8ca3;
+            --border: #2a3951;
+            --shadow: 0 20px 55px rgba(0, 0, 0, 0.38);
+            --control-bg: #13233a;
+            --result-bg: #102033;
+            --result-border: #22354f;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body[data-theme="system"] {
+                color-scheme: dark;
+                --bg: #08121f;
+                --bg-spot-1: rgba(35, 139, 164, 0.28);
+                --bg-spot-2: rgba(9, 90, 126, 0.26);
+                --panel: #0f1b2d;
+                --panel-strong: #13233a;
+                --ink: #e5eef8;
+                --muted: #9fb4ca;
+                --accent: #43b4c8;
+                --accent-strong: #2a8ca3;
+                --border: #2a3951;
+                --shadow: 0 20px 55px rgba(0, 0, 0, 0.38);
+                --control-bg: #13233a;
+                --result-bg: #102033;
+                --result-border: #22354f;
+            }
         }
 
         * {
@@ -162,8 +206,8 @@ PAGE_TEMPLATE = """
             font-family: Arial, Helvetica, sans-serif;
             color: var(--ink);
             background:
-                radial-gradient(circle at top left, rgba(31, 122, 140, 0.22), transparent 34%),
-                radial-gradient(circle at bottom right, rgba(11, 79, 108, 0.18), transparent 28%),
+                radial-gradient(circle at top left, var(--bg-spot-1), transparent 34%),
+                radial-gradient(circle at bottom right, var(--bg-spot-2), transparent 28%),
                 var(--bg);
             display: grid;
             place-items: center;
@@ -193,7 +237,7 @@ PAGE_TEMPLATE = """
 
         .hero {
             padding: 32px;
-            background: linear-gradient(145deg, #ffffff 0%, #f7fbfe 100%);
+            background: linear-gradient(145deg, var(--panel) 0%, var(--panel-strong) 100%);
         }
 
         .mode-switch {
@@ -203,11 +247,19 @@ PAGE_TEMPLATE = """
             justify-content: flex-end;
         }
 
+        .theme-switch {
+            display: inline-flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin-top: 12px;
+        }
+
         .mode-button {
             width: auto;
             min-width: 132px;
             padding: 12px 16px;
-            background: #edf2f7;
+            background: var(--control-bg);
             color: var(--ink);
             box-shadow: none;
             border: 1px solid var(--border);
@@ -281,7 +333,7 @@ PAGE_TEMPLATE = """
             border: 1px solid var(--border);
             font: inherit;
             padding: 14px 15px;
-            background: #fff;
+            background: var(--panel);
             color: var(--ink);
         }
 
@@ -313,8 +365,8 @@ PAGE_TEMPLATE = """
         .result {
             padding: 16px;
             border-radius: 16px;
-            background: #f8fcfd;
-            border: 1px solid #d6eef3;
+            background: var(--result-bg);
+            border: 1px solid var(--result-border);
             min-height: 76px;
             display: grid;
             align-content: center;
@@ -362,7 +414,7 @@ PAGE_TEMPLATE = """
             padding-left: 10px;
             padding-right: 10px;
             text-align: center;
-            background: #f8fcfd;
+            background: var(--result-bg);
             border: 1px solid var(--border);
             border-radius: 14px;
             font-weight: 700;
@@ -379,6 +431,10 @@ PAGE_TEMPLATE = """
             }
 
             .mode-switch {
+                justify-content: stretch;
+            }
+
+            .theme-switch {
                 justify-content: stretch;
             }
 
@@ -420,6 +476,14 @@ PAGE_TEMPLATE = """
             <div class="mode-switch" role="tablist" aria-label="App mode">
                 <button class="mode-button active" id="calculatorModeButton" type="button">Calculator</button>
                 <button class="mode-button" id="converterModeButton" type="button">Converter</button>
+            </div>
+
+            <div>
+                <div class="mode-switch theme-switch" role="tablist" aria-label="Theme mode">
+                    <button class="mode-button active" id="lightThemeButton" type="button">Light</button>
+                    <button class="mode-button" id="darkThemeButton" type="button">Dark</button>
+                    <button class="mode-button" id="systemThemeButton" type="button">System</button>
+                </div>
             </div>
         </section>
 
@@ -507,6 +571,9 @@ PAGE_TEMPLATE = """
         const appShell = document.getElementById("appShell");
         const calculatorModeButton = document.getElementById("calculatorModeButton");
         const converterModeButton = document.getElementById("converterModeButton");
+        const lightThemeButton = document.getElementById("lightThemeButton");
+        const darkThemeButton = document.getElementById("darkThemeButton");
+        const systemThemeButton = document.getElementById("systemThemeButton");
 
         const calculatorValue1 = document.getElementById("calculatorValue1");
         const calculatorValue2 = document.getElementById("calculatorValue2");
@@ -520,6 +587,45 @@ PAGE_TEMPLATE = """
         const valueInput = document.getElementById("value");
         const resultBox = document.getElementById("result");
         const convertButton = document.getElementById("convertButton");
+        const themeButtons = {
+            light: lightThemeButton,
+            dark: darkThemeButton,
+            system: systemThemeButton,
+        };
+
+        function getStoredTheme() {
+            try {
+                return window.localStorage.getItem("cc-theme") || "system";
+            } catch (error) {
+                return "system";
+            }
+        }
+
+        function getSystemTheme() {
+            return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+
+        function applyTheme(theme) {
+            const resolvedTheme = theme === "system" ? getSystemTheme() : theme;
+            document.body.dataset.theme = theme;
+            document.body.dataset.resolvedTheme = resolvedTheme;
+
+            Object.entries(themeButtons).forEach(([name, button]) => {
+                if (button) {
+                    button.classList.toggle("active", name === theme);
+                }
+            });
+        }
+
+        function setTheme(theme) {
+            try {
+                window.localStorage.setItem("cc-theme", theme);
+            } catch (error) {
+                // Ignore storage failures and keep the in-memory theme.
+            }
+
+            applyTheme(theme);
+        }
 
         function formatNumber(value) {
             if (!Number.isFinite(value)) {
@@ -670,6 +776,9 @@ PAGE_TEMPLATE = """
         if (categorySelect && fromUnitSelect && toUnitSelect && valueInput && resultBox && convertButton) {
             calculatorModeButton.addEventListener("click", () => setMode("calculator"));
             converterModeButton.addEventListener("click", () => setMode("converter"));
+            lightThemeButton.addEventListener("click", () => setTheme("light"));
+            darkThemeButton.addEventListener("click", () => setTheme("dark"));
+            systemThemeButton.addEventListener("click", () => setTheme("system"));
             calculateButton.addEventListener("click", calculateValue);
             calculatorValue1.addEventListener("input", calculateValue);
             calculatorValue2.addEventListener("input", calculateValue);
@@ -688,9 +797,19 @@ PAGE_TEMPLATE = """
             fromUnitSelect.addEventListener("change", convertValue);
             toUnitSelect.addEventListener("change", convertValue);
 
+            applyTheme(getStoredTheme());
             setMode("converter");
             calculateValue();
             convertValue();
+
+            if (window.matchMedia) {
+                const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+                mediaQuery.addEventListener("change", () => {
+                    if (getStoredTheme() === "system") {
+                        applyTheme("system");
+                    }
+                });
+            }
         }
     </script>
 </body>
