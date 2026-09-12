@@ -321,6 +321,80 @@ PAGE_TEMPLATE = """
             gap: 8px;
         }
 
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            font: inherit;
+            padding: 14px 15px;
+            background: var(--panel);
+            color: var(--ink);
+            cursor: pointer;
+            box-shadow: none;
+        }
+
+        .dropdown-toggle:focus,
+        .dropdown-option:focus {
+            outline: 3px solid rgba(31, 122, 140, 0.18);
+            border-color: var(--accent);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            z-index: 30;
+            display: none;
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 8px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: var(--panel);
+            box-shadow: var(--shadow);
+        }
+
+        .dropdown.open .dropdown-menu {
+            display: grid;
+            gap: 6px;
+        }
+
+        .dropdown-option {
+            width: 100%;
+            text-align: left;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 12px;
+            background: transparent;
+            color: var(--ink);
+            box-shadow: none;
+            cursor: pointer;
+        }
+
+        .dropdown-option.selected,
+        .dropdown-option:hover {
+            background: rgba(31, 122, 140, 0.1);
+        }
+
+        .chevron {
+            font-size: 0.8rem;
+            color: var(--muted);
+            transition: transform 160ms ease;
+        }
+
+        .dropdown.open .chevron {
+            transform: rotate(180deg);
+        }
+
         label {
             font-size: 0.9rem;
             font-weight: 700;
@@ -340,6 +414,10 @@ PAGE_TEMPLATE = """
         input:focus, select:focus, button:focus {
             outline: 3px solid rgba(31, 122, 140, 0.18);
             border-color: var(--accent);
+        }
+
+        .select-hidden {
+            display: none;
         }
 
         .grid-2 {
@@ -523,7 +601,14 @@ PAGE_TEMPLATE = """
         <section class="card converter panel" aria-label="Unit converter panel">
             <div class="field">
                 <label for="category">Category</label>
-                <select id="category"></select>
+                <div id="categoryDropdown" class="dropdown" aria-label="Category selector">
+                    <button id="categoryToggle" class="dropdown-toggle" type="button" aria-expanded="false" aria-controls="categoryMenu">
+                        <span id="categoryLabel">Select a category</span>
+                        <span class="chevron" aria-hidden="true">▾</span>
+                    </button>
+                    <div id="categoryMenu" class="dropdown-menu" role="listbox" aria-label="Category options"></div>
+                </div>
+                <select id="category" class="select-hidden"></select>
             </div>
 
             <div class="field">
@@ -534,11 +619,25 @@ PAGE_TEMPLATE = """
             <div class="grid-2">
                 <div class="field">
                     <label for="fromUnit">From</label>
-                    <select id="fromUnit"></select>
+                    <div id="fromUnitDropdown" class="dropdown" aria-label="From unit selector">
+                        <button id="fromUnitToggle" class="dropdown-toggle" type="button" aria-expanded="false" aria-controls="fromUnitMenu">
+                            <span id="fromUnitLabel">Select a unit</span>
+                            <span class="chevron" aria-hidden="true">▾</span>
+                        </button>
+                        <div id="fromUnitMenu" class="dropdown-menu" role="listbox" aria-label="From unit options"></div>
+                    </div>
+                    <select id="fromUnit" class="select-hidden"></select>
                 </div>
                 <div class="field">
                     <label for="toUnit">To</label>
-                    <select id="toUnit"></select>
+                    <div id="toUnitDropdown" class="dropdown" aria-label="To unit selector">
+                        <button id="toUnitToggle" class="dropdown-toggle" type="button" aria-expanded="false" aria-controls="toUnitMenu">
+                            <span id="toUnitLabel">Select a unit</span>
+                            <span class="chevron" aria-hidden="true">▾</span>
+                        </button>
+                        <div id="toUnitMenu" class="dropdown-menu" role="listbox" aria-label="To unit options"></div>
+                    </div>
+                    <select id="toUnit" class="select-hidden"></select>
                 </div>
             </div>
 
@@ -587,11 +686,18 @@ PAGE_TEMPLATE = """
         const valueInput = document.getElementById("value");
         const resultBox = document.getElementById("result");
         const convertButton = document.getElementById("convertButton");
+        const categoryToggle = document.getElementById("categoryToggle");
+        const categoryLabel = document.getElementById("categoryLabel");
+        const fromUnitToggle = document.getElementById("fromUnitToggle");
+        const fromUnitLabel = document.getElementById("fromUnitLabel");
+        const toUnitToggle = document.getElementById("toUnitToggle");
+        const toUnitLabel = document.getElementById("toUnitLabel");
         const themeButtons = {
             light: lightThemeButton,
             dark: darkThemeButton,
             system: systemThemeButton,
         };
+        const dropdownState = {};
 
         function getStoredTheme() {
             try {
@@ -680,6 +786,83 @@ PAGE_TEMPLATE = """
             calculatorResult.innerHTML = `<strong>${formatNumber(result)}</strong><p>${value1} ${operation} ${value2} = ${formatNumber(result)}</p>`;
         }
 
+        function closeDropdowns(exceptKey = null) {
+            Object.entries(dropdownState).forEach(([key, dropdown]) => {
+                if (dropdown && key !== exceptKey) {
+                    dropdown.root.classList.remove("open");
+                    dropdown.toggle.setAttribute("aria-expanded", "false");
+                }
+            });
+        }
+
+        function syncDropdownDisplay(select) {
+            const dropdown = dropdownState[select.id];
+            if (!dropdown) {
+                return;
+            }
+
+            const options = Array.from(select.options).map((option) => option.value);
+            dropdown.menu.innerHTML = "";
+
+            options.forEach((value) => {
+                const optionButton = document.createElement("button");
+                optionButton.type = "button";
+                optionButton.className = "dropdown-option";
+                optionButton.textContent = value;
+                optionButton.setAttribute("role", "option");
+                optionButton.setAttribute("aria-selected", value === select.value ? "true" : "false");
+
+                if (value === select.value) {
+                    optionButton.classList.add("selected");
+                }
+
+                optionButton.addEventListener("click", (event) => {
+                    event.stopPropagation();
+                    select.value = value;
+                    dropdown.label.textContent = value;
+                    dropdown.menu.querySelectorAll(".dropdown-option").forEach((button) => {
+                        const selected = button === optionButton;
+                        button.classList.toggle("selected", selected);
+                        button.setAttribute("aria-selected", selected ? "true" : "false");
+                    });
+                    closeDropdowns();
+
+                    if (select.id === "category") {
+                        updateUnitSelectors();
+                        convertValue();
+                    } else {
+                        convertValue();
+                    }
+                });
+
+                dropdown.menu.appendChild(optionButton);
+            });
+
+            dropdown.label.textContent = select.value || options[0] || "";
+        }
+
+        function bindDropdown(select, dropdownRoot, toggle, label, menu) {
+            dropdownState[select.id] = { root: dropdownRoot, toggle, label, menu };
+            toggle.addEventListener("click", (event) => {
+                event.stopPropagation();
+                const isOpen = dropdownRoot.classList.contains("open");
+                closeDropdowns(select.id);
+                if (!isOpen) {
+                    dropdownRoot.classList.add("open");
+                    toggle.setAttribute("aria-expanded", "true");
+                }
+            });
+
+            document.addEventListener("click", (event) => {
+                if (!dropdownRoot.contains(event.target)) {
+                    dropdownRoot.classList.remove("open");
+                    toggle.setAttribute("aria-expanded", "false");
+                }
+            });
+
+            syncDropdownDisplay(select);
+        }
+
         function setOptions(select, options) {
             if (!select) {
                 return;
@@ -695,6 +878,10 @@ PAGE_TEMPLATE = """
                 }
                 select.appendChild(optionElement);
             });
+
+            if (select.id in dropdownState) {
+                syncDropdownDisplay(select);
+            }
         }
 
         function getUnitList(category) {
@@ -718,6 +905,7 @@ PAGE_TEMPLATE = """
 
             if (units.length > 1) {
                 toUnitSelect.selectedIndex = 1;
+                syncDropdownDisplay(toUnitSelect);
             }
         }
 
@@ -774,6 +962,10 @@ PAGE_TEMPLATE = """
         }
 
         if (categorySelect && fromUnitSelect && toUnitSelect && valueInput && resultBox && convertButton) {
+            bindDropdown(categorySelect, document.getElementById("categoryDropdown"), categoryToggle, categoryLabel, document.getElementById("categoryMenu"));
+            bindDropdown(fromUnitSelect, document.getElementById("fromUnitDropdown"), fromUnitToggle, fromUnitLabel, document.getElementById("fromUnitMenu"));
+            bindDropdown(toUnitSelect, document.getElementById("toUnitDropdown"), toUnitToggle, toUnitLabel, document.getElementById("toUnitMenu"));
+
             calculatorModeButton.addEventListener("click", () => setMode("calculator"));
             converterModeButton.addEventListener("click", () => setMode("converter"));
             lightThemeButton.addEventListener("click", () => setTheme("light"));
