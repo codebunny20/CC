@@ -1,6 +1,11 @@
-from flask import Flask, render_template_string
+import json
+import os
+
+from flask import Flask, jsonify, render_template_string, request
 
 app = Flask(__name__)
+
+HISTORY_PATH = os.path.join(os.path.dirname(__file__), "history.json")
 
 UNIT_CATEGORIES = {
     "Length": {
@@ -102,8 +107,23 @@ UNIT_CATEGORIES = {
         },
     },
     "Force": {
-        "type": "reference",
-        "units": ["Newton"],
+        "type": "linear",
+        "base": "Newton",
+        "units": {
+            "Newton": 1,
+            "Dyne": 1e-5,
+            "Pound-force": 4.4482216152605,
+            "Ounce-force": 0.27801385095378125,
+            "Kilogram-force": 9.80665,
+            "Kilopond": 9.80665,
+            "Gram-force": 0.00980665,
+            "Poundal": 0.138254954376,
+            "Kip": 4448.2216152605,
+            "Ton-force": 9806.65,
+            "Millinewton": 0.001,
+            "Kilonewton": 1000,
+            "Meganewton": 1000000,
+        },
     },
     "Electricity": {
         "type": "reference",
@@ -209,8 +229,7 @@ PAGE_TEMPLATE = """
                 radial-gradient(circle at top left, var(--bg-spot-1), transparent 34%),
                 radial-gradient(circle at bottom right, var(--bg-spot-2), transparent 28%),
                 var(--bg);
-            display: grid;
-            place-items: center;
+            overflow-y: auto;
             padding: 24px;
         }
 
@@ -218,6 +237,7 @@ PAGE_TEMPLATE = """
             width: min(100%, 1040px);
             display: grid;
             gap: 20px;
+            margin: 0 auto;
         }
 
         .topbar {
@@ -232,7 +252,7 @@ PAGE_TEMPLATE = """
             border: 1px solid rgba(217, 226, 236, 0.9);
             border-radius: 24px;
             box-shadow: var(--shadow);
-            overflow: hidden;
+            overflow: visible;
         }
 
         .hero {
@@ -247,12 +267,10 @@ PAGE_TEMPLATE = """
             justify-content: flex-end;
         }
 
-        .theme-switch {
-            display: inline-flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            margin-top: 12px;
+        .header-actions {
+            display: grid;
+            justify-items: end;
+            gap: 12px;
         }
 
         .mode-button {
@@ -263,6 +281,132 @@ PAGE_TEMPLATE = """
             color: var(--ink);
             box-shadow: none;
             border: 1px solid var(--border);
+        }
+
+        .settings-button,
+        .history-button {
+            min-width: 110px;
+            padding: 12px 16px;
+            background: var(--control-bg);
+            color: var(--ink);
+            box-shadow: none;
+            border: 1px solid var(--border);
+        }
+
+        .settings-window,
+        .dialog-window {
+            position: fixed;
+            top: 92px;
+            right: 24px;
+            width: min(320px, calc(100vw - 32px));
+            display: none;
+            z-index: 100;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            padding: 18px;
+        }
+
+        .settings-window.open,
+        .dialog-window.open {
+            display: grid;
+            gap: 12px;
+        }
+
+        .settings-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 4px;
+        }
+
+        .settings-header h3 {
+            margin: 0;
+            font-size: 1.05rem;
+        }
+
+        .settings-close {
+            min-width: 0;
+            width: auto;
+            padding: 8px 10px;
+            background: var(--control-bg);
+            color: var(--ink);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: none;
+        }
+
+        .settings-section {
+            display: grid;
+            gap: 8px;
+        }
+
+        .settings-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .settings-options,
+        .settings-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .settings-option,
+        .settings-action {
+            flex: 1 1 0;
+            min-width: 84px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--control-bg);
+            color: var(--ink);
+            box-shadow: none;
+        }
+
+        .dialog-body {
+            display: grid;
+            gap: 10px;
+            color: var(--ink);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .dialog-body p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .history-list {
+            display: grid;
+            gap: 8px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .history-item {
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: var(--result-bg);
+            border: 1px solid var(--result-border);
+        }
+
+        .history-item strong {
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .settings-option.active {
+            background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+            border-color: transparent;
+            color: #fff;
         }
 
         .mode-button.active {
@@ -354,8 +498,10 @@ PAGE_TEMPLATE = """
             right: 0;
             z-index: 30;
             display: none;
-            max-height: 220px;
+            max-height: min(260px, 40vh);
             overflow-y: auto;
+            overscroll-behavior: contain;
+            scrollbar-gutter: stable;
             padding: 8px;
             border-radius: 14px;
             border: 1px solid var(--border);
@@ -551,17 +697,14 @@ PAGE_TEMPLATE = """
                 </p>
             </div>
 
-            <div class="mode-switch" role="tablist" aria-label="App mode">
-                <button class="mode-button active" id="calculatorModeButton" type="button">Calculator</button>
-                <button class="mode-button" id="converterModeButton" type="button">Converter</button>
-            </div>
-
-            <div>
-                <div class="mode-switch theme-switch" role="tablist" aria-label="Theme mode">
-                    <button class="mode-button active" id="lightThemeButton" type="button">Light</button>
-                    <button class="mode-button" id="darkThemeButton" type="button">Dark</button>
-                    <button class="mode-button" id="systemThemeButton" type="button">System</button>
+            <div class="header-actions">
+                <div class="mode-switch" role="tablist" aria-label="App mode">
+                    <button class="mode-button active" id="calculatorModeButton" type="button">Calculator</button>
+                    <button class="mode-button" id="converterModeButton" type="button">Converter</button>
                 </div>
+
+                <button class="mode-button history-button" id="historyButton" type="button" aria-label="History" aria-expanded="false">🕘 History</button>
+                <button class="mode-button settings-button" id="settingsButton" type="button" aria-label="Settings" aria-expanded="false">⚙ Settings</button>
             </div>
         </section>
 
@@ -652,27 +795,82 @@ PAGE_TEMPLATE = """
         <section class="card side">
             <h2>Included units</h2>
             <p class="lede" style="margin: 0; font-size: 0.95rem;">
-                The converter includes every unit named in your list. Where a unit is a reference quantity rather than a
+                The converter includes every unit i can think of at the moment. Where a unit is a reference quantity rather than a
                 directly convertible scale, it is still available in the catalog.
             </p>
             <ul class="unit-list">
                 <li>Length, mass, temperature, time, volume, energy, pressure, and speed</li>
                 <li>Electricity, illumination, luminous intensity, radiation, magnetism, force, and sound level</li>
-                <li>Meter, kilometer, inch, foot, mile, kilogram, pound, joule, calorie, pascal, newton, tesla, decibel, and more</li>
+                <li>Meter, kilometer, inch, foot, mile, kilogram, pound, joule, calorie, pascal, newton, dyne, lbf, kgf, and more</li>
             </ul>
         </section>
     </main>
+
+    <aside class="settings-window" id="settingsWindow" role="dialog" aria-modal="true" aria-label="Settings panel">
+        <div class="settings-header">
+            <h3>Settings</h3>
+            <button class="settings-close" id="settingsCloseButton" type="button" aria-label="Close settings">Close</button>
+        </div>
+
+        <div class="settings-section">
+            <div class="settings-label">Appearance</div>
+            <div class="settings-options" role="tablist" aria-label="Theme selection">
+                <button class="settings-option active" data-theme="light" type="button">Light</button>
+                <button class="settings-option" data-theme="dark" type="button">Dark</button>
+                <button class="settings-option" data-theme="system" type="button">System</button>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="settings-label">Quick actions</div>
+            <div class="settings-actions" role="group" aria-label="History and help actions">
+                <button class="settings-action" id="historyActionButton" type="button">History</button>
+                <button class="settings-action" id="helpActionButton" type="button">Help</button>
+            </div>
+        </div>
+    </aside>
+
+    <aside class="dialog-window" id="historyWindow" role="dialog" aria-modal="true" aria-label="History panel">
+        <div class="settings-header">
+            <h3>History</h3>
+            <button class="settings-close" id="historyCloseButton" type="button" aria-label="Close history">Close</button>
+        </div>
+        <div class="dialog-body">
+            <div id="historyList" class="history-list" aria-live="polite"></div>
+        </div>
+    </aside>
+
+    <aside class="dialog-window" id="helpWindow" role="dialog" aria-modal="true" aria-label="Help panel">
+        <div class="settings-header">
+            <h3>Help</h3>
+            <button class="settings-close" id="helpCloseButton" type="button" aria-label="Close help">Close</button>
+        </div>
+        <div class="dialog-body">
+            <p>Use Calculator mode for arithmetic and Converter mode for unit conversion between supported categories.</p>
+            <p>Pick a category, choose the units to convert, and use the result box for quick calculations.</p>
+            <p>Theme changes persist in your browser, and the history window keeps a recent log of your actions.</p>
+        </div>
+    </aside>
 
     <script>
         const categoryConfig = {{ category_config|tojson }};
         const temperatureUnits = ["Kelvin", "Celsius", "Fahrenheit", "Rankine"];
 
         const appShell = document.getElementById("appShell");
+        const settingsButton = document.getElementById("settingsButton");
+        const settingsWindow = document.getElementById("settingsWindow");
+        const settingsCloseButton = document.getElementById("settingsCloseButton");
+        const historyButton = document.getElementById("historyButton");
+        const historyWindow = document.getElementById("historyWindow");
+        const historyCloseButton = document.getElementById("historyCloseButton");
+        const historyList = document.getElementById("historyList");
+        const helpButton = document.getElementById("helpActionButton");
+        const helpWindow = document.getElementById("helpWindow");
+        const helpCloseButton = document.getElementById("helpCloseButton");
         const calculatorModeButton = document.getElementById("calculatorModeButton");
         const converterModeButton = document.getElementById("converterModeButton");
-        const lightThemeButton = document.getElementById("lightThemeButton");
-        const darkThemeButton = document.getElementById("darkThemeButton");
-        const systemThemeButton = document.getElementById("systemThemeButton");
+        const settingsThemeButtons = Array.from(document.querySelectorAll(".settings-option"));
+        const historyActionButton = document.getElementById("historyActionButton");
 
         const calculatorValue1 = document.getElementById("calculatorValue1");
         const calculatorValue2 = document.getElementById("calculatorValue2");
@@ -692,11 +890,7 @@ PAGE_TEMPLATE = """
         const fromUnitLabel = document.getElementById("fromUnitLabel");
         const toUnitToggle = document.getElementById("toUnitToggle");
         const toUnitLabel = document.getElementById("toUnitLabel");
-        const themeButtons = {
-            light: lightThemeButton,
-            dark: darkThemeButton,
-            system: systemThemeButton,
-        };
+        const themeButtons = {};
         const dropdownState = {};
 
         function getStoredTheme() {
@@ -704,6 +898,14 @@ PAGE_TEMPLATE = """
                 return window.localStorage.getItem("cc-theme") || "system";
             } catch (error) {
                 return "system";
+            }
+        }
+
+        function getStoredSettingsOpen() {
+            try {
+                return window.localStorage.getItem("cc-settings-open") === "true";
+            } catch (error) {
+                return false;
             }
         }
 
@@ -721,6 +923,12 @@ PAGE_TEMPLATE = """
                     button.classList.toggle("active", name === theme);
                 }
             });
+
+            settingsThemeButtons.forEach((button) => {
+                const selected = button.dataset.theme === theme;
+                button.classList.toggle("active", selected);
+                button.setAttribute("aria-pressed", selected ? "true" : "false");
+            });
         }
 
         function setTheme(theme) {
@@ -731,6 +939,56 @@ PAGE_TEMPLATE = """
             }
 
             applyTheme(theme);
+        }
+
+        function setWindowState(windowElement, triggerButton, forceOpen) {
+            const open = typeof forceOpen === "boolean" ? forceOpen : !windowElement.classList.contains("open");
+            const allWindows = [settingsWindow, historyWindow, helpWindow].filter(Boolean);
+
+            allWindows.forEach((item) => {
+                if (item && item !== windowElement) {
+                    item.classList.remove("open");
+                }
+            });
+
+            if (windowElement) {
+                windowElement.classList.toggle("open", open);
+            }
+
+            if (triggerButton) {
+                triggerButton.setAttribute("aria-expanded", String(open));
+            }
+
+            if (settingsWindow && settingsButton) {
+                settingsButton.setAttribute("aria-expanded", String(settingsWindow.classList.contains("open")));
+            }
+            if (historyWindow && historyButton) {
+                historyButton.setAttribute("aria-expanded", String(historyWindow.classList.contains("open")));
+            }
+            if (helpWindow && helpButton) {
+                helpButton.setAttribute("aria-expanded", String(helpWindow.classList.contains("open")));
+            }
+        }
+
+        function toggleSettingsWindow(forceOpen) {
+            const open = typeof forceOpen === "boolean" ? forceOpen : !settingsWindow.classList.contains("open");
+            setWindowState(settingsWindow, settingsButton, open);
+
+            try {
+                window.localStorage.setItem("cc-settings-open", String(open));
+            } catch (error) {
+                // Ignore storage failures; visible state is best-effort.
+            }
+        }
+
+        function toggleHistoryWindow(forceOpen) {
+            const open = typeof forceOpen === "boolean" ? forceOpen : !historyWindow.classList.contains("open");
+            setWindowState(historyWindow, historyButton, open);
+        }
+
+        function toggleHelpWindow(forceOpen) {
+            const open = typeof forceOpen === "boolean" ? forceOpen : !helpWindow.classList.contains("open");
+            setWindowState(helpWindow, helpButton, open);
         }
 
         function formatNumber(value) {
@@ -927,6 +1185,43 @@ PAGE_TEMPLATE = """
             return fromKelvin[toUnit](toKelvin[fromUnit](value));
         }
 
+        function saveHistoryEntry(valueText, resultText) {
+            const payload = {
+                value: valueText,
+                result: resultText,
+                timestamp: new Date().toLocaleString(),
+            };
+
+            fetch("/history", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            }).catch(() => {
+                // Ignore network errors; the page should keep working.
+            }).then(() => loadHistory());
+        }
+
+        function isValidConversion(category, fromUnit, toUnit) {
+            const config = categoryConfig[category];
+            if (!config || !fromUnit || !toUnit) {
+                return false;
+            }
+
+            if (config.type === "temperature") {
+                return temperatureUnits.includes(fromUnit) && temperatureUnits.includes(toUnit);
+            }
+
+            if (config.type === "linear") {
+                return Object.prototype.hasOwnProperty.call(config.units, fromUnit) && Object.prototype.hasOwnProperty.call(config.units, toUnit);
+            }
+
+            if (config.type === "reference") {
+                return fromUnit === toUnit && config.units.includes(fromUnit);
+            }
+
+            return false;
+        }
+
         function convertValue() {
             const category = categorySelect.value;
             const value = Number(valueInput.value);
@@ -934,14 +1229,16 @@ PAGE_TEMPLATE = """
             const toUnit = toUnitSelect.value;
             const config = categoryConfig[category];
 
-            if (!config || Number.isNaN(value)) {
-                resultBox.innerHTML = "<strong>Result unavailable</strong><p>Enter a valid value and try again.</p>";
+            if (!config || Number.isNaN(value) || !isValidConversion(category, fromUnit, toUnit)) {
+                resultBox.innerHTML = "<strong>Conversion unavailable</strong><p>Choose two compatible units from the same category.</p>";
                 return;
             }
 
             if (config.type === "temperature") {
                 const converted = convertTemperature(value, fromUnit, toUnit);
-                resultBox.innerHTML = `<strong>${formatNumber(converted)} ${toUnit}</strong><p>${value} ${fromUnit} = ${formatNumber(converted)} ${toUnit}</p>`;
+                const summary = `${formatNumber(converted)} ${toUnit}`;
+                const description = `${value} ${fromUnit} = ${formatNumber(converted)} ${toUnit}`;
+                resultBox.innerHTML = `<strong>${summary}</strong><p>${description}</p>`;
                 return;
             }
 
@@ -949,11 +1246,79 @@ PAGE_TEMPLATE = """
                 const fromFactor = config.units[fromUnit];
                 const toFactor = config.units[toUnit];
                 const converted = value * fromFactor / toFactor;
-                resultBox.innerHTML = `<strong>${formatNumber(converted)} ${toUnit}</strong><p>${value} ${fromUnit} = ${formatNumber(converted)} ${toUnit}</p>`;
+                const summary = `${formatNumber(converted)} ${toUnit}`;
+                const description = `${value} ${fromUnit} = ${formatNumber(converted)} ${toUnit}`;
+                resultBox.innerHTML = `<strong>${summary}</strong><p>${description}</p>`;
                 return;
             }
 
             resultBox.innerHTML = `<strong>${value} ${fromUnit}</strong><p>${category} is listed as a reference quantity. Select the same unit to keep the value unchanged.</p>`;
+        }
+
+        function convertAndRecordHistory() {
+            const category = categorySelect.value;
+            const value = Number(valueInput.value);
+            const fromUnit = fromUnitSelect.value;
+            const toUnit = toUnitSelect.value;
+            const config = categoryConfig[category];
+
+            if (!config || Number.isNaN(value) || !isValidConversion(category, fromUnit, toUnit)) {
+                return;
+            }
+
+            if (config.type === "temperature") {
+                const converted = convertTemperature(value, fromUnit, toUnit);
+                const summary = `${formatNumber(converted)} ${toUnit}`;
+                const description = `${value} ${fromUnit} = ${formatNumber(converted)} ${toUnit}`;
+                resultBox.innerHTML = `<strong>${summary}</strong><p>${description}</p>`;
+                saveHistoryEntry(`${value} ${fromUnit} to ${toUnit}`, description);
+                return;
+            }
+
+            if (config.type === "linear") {
+                const fromFactor = config.units[fromUnit];
+                const toFactor = config.units[toUnit];
+                const converted = value * fromFactor / toFactor;
+                const summary = `${formatNumber(converted)} ${toUnit}`;
+                const description = `${value} ${fromUnit} = ${formatNumber(converted)} ${toUnit}`;
+                resultBox.innerHTML = `<strong>${summary}</strong><p>${description}</p>`;
+                saveHistoryEntry(`${value} ${fromUnit} to ${toUnit}`, description);
+                return;
+            }
+
+            resultBox.innerHTML = `<strong>${value} ${fromUnit}</strong><p>${category} is listed as a reference quantity. Select the same unit to keep the value unchanged.</p>`;
+        }
+
+        function renderHistoryEntries(items) {
+            if (!historyList) {
+                return;
+            }
+
+            const entries = Array.isArray(items) && items.length ? items : [{ value: "No conversion history yet.", result: "Start converting to build your log.", timestamp: "" }];
+            historyList.innerHTML = entries
+                .slice(0, 8)
+                .map((entry) => {
+                    const value = entry && typeof entry.value === "string" ? entry.value : "Recent conversion";
+                    const result = entry && typeof entry.result === "string" && entry.result.trim() ? entry.result : "Saved result";
+                    const stamp = entry && typeof entry.timestamp === "string" && entry.timestamp ? entry.timestamp : "Just now";
+                    return `<li class="history-item"><strong>${value}</strong><span>${result}</span><small>${stamp}</small></li>`;
+                })
+                .join("");
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch("/history");
+                if (!response.ok) {
+                    renderHistoryEntries([]);
+                    return;
+                }
+
+                const payload = await response.json();
+                renderHistoryEntries(Array.isArray(payload.items) ? payload.items : payload);
+            } catch (error) {
+                renderHistoryEntries([]);
+            }
         }
 
         function populateCategories() {
@@ -966,11 +1331,34 @@ PAGE_TEMPLATE = """
             bindDropdown(fromUnitSelect, document.getElementById("fromUnitDropdown"), fromUnitToggle, fromUnitLabel, document.getElementById("fromUnitMenu"));
             bindDropdown(toUnitSelect, document.getElementById("toUnitDropdown"), toUnitToggle, toUnitLabel, document.getElementById("toUnitMenu"));
 
+            settingsButton.addEventListener("click", () => toggleSettingsWindow());
+            settingsCloseButton.addEventListener("click", () => toggleSettingsWindow(false));
+            historyButton.addEventListener("click", () => toggleHistoryWindow());
+            historyActionButton.addEventListener("click", () => toggleHistoryWindow());
+            historyCloseButton.addEventListener("click", () => toggleHistoryWindow(false));
+            helpButton.addEventListener("click", () => toggleHelpWindow());
+            helpCloseButton.addEventListener("click", () => toggleHelpWindow(false));
+            document.addEventListener("click", (event) => {
+                const clickedInsideSettings = settingsWindow && settingsWindow.contains(event.target);
+                const clickedInsideHistory = historyWindow && historyWindow.contains(event.target);
+                const clickedInsideHelp = helpWindow && helpWindow.contains(event.target);
+                const clickedHistoryTrigger = historyButton && historyButton.contains(event.target);
+                const clickedSettingsTrigger = settingsButton && settingsButton.contains(event.target);
+                const clickedHelpTrigger = helpButton && helpButton.contains(event.target);
+                const clickedHistoryAction = historyActionButton && historyActionButton.contains(event.target);
+
+                if (!clickedInsideSettings && !clickedInsideHistory && !clickedInsideHelp && !clickedHistoryTrigger && !clickedSettingsTrigger && !clickedHelpTrigger && !clickedHistoryAction) {
+                    toggleSettingsWindow(false);
+                    toggleHistoryWindow(false);
+                    toggleHelpWindow(false);
+                }
+            });
+
             calculatorModeButton.addEventListener("click", () => setMode("calculator"));
             converterModeButton.addEventListener("click", () => setMode("converter"));
-            lightThemeButton.addEventListener("click", () => setTheme("light"));
-            darkThemeButton.addEventListener("click", () => setTheme("dark"));
-            systemThemeButton.addEventListener("click", () => setTheme("system"));
+            settingsThemeButtons.forEach((button) => {
+                button.addEventListener("click", () => setTheme(button.dataset.theme));
+            });
             calculateButton.addEventListener("click", calculateValue);
             calculatorValue1.addEventListener("input", calculateValue);
             calculatorValue2.addEventListener("input", calculateValue);
@@ -984,12 +1372,16 @@ PAGE_TEMPLATE = """
                 convertValue();
             });
 
-            convertButton.addEventListener("click", convertValue);
+            convertButton.addEventListener("click", convertAndRecordHistory);
             valueInput.addEventListener("input", convertValue);
             fromUnitSelect.addEventListener("change", convertValue);
             toUnitSelect.addEventListener("change", convertValue);
 
-            applyTheme(getStoredTheme());
+            const storedTheme = getStoredTheme();
+            applyTheme(storedTheme);
+            toggleSettingsWindow(getStoredSettingsOpen());
+            settingsButton.setAttribute("aria-expanded", String(settingsWindow.classList.contains("open")));
+            loadHistory();
             setMode("converter");
             calculateValue();
             convertValue();
@@ -1009,9 +1401,73 @@ PAGE_TEMPLATE = """
 """
 
 
+def _load_history():
+    try:
+        with open(HISTORY_PATH, "r", encoding="utf-8") as history_file:
+            payload = json.load(history_file)
+            return payload if isinstance(payload, list) else []
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        return []
+
+
+def _save_history(entries):
+    try:
+        with open(HISTORY_PATH, "w", encoding="utf-8") as history_file:
+            json.dump(entries, history_file, indent=2)
+    except OSError:
+        pass
+
+
+def is_valid_conversion(category, from_unit, to_unit):
+    if not category or not from_unit or not to_unit:
+        return False
+
+    config = UNIT_CATEGORIES.get(category)
+    if not config:
+        return False
+
+    if config["type"] == "temperature":
+        return from_unit in config["units"] and to_unit in config["units"]
+
+    if config["type"] == "linear":
+        return from_unit in config["units"] and to_unit in config["units"]
+
+    if config["type"] == "reference":
+        return from_unit == to_unit and from_unit in config["units"]
+
+    return False
+
+
 @app.route("/")
 def home():
     return render_template_string(PAGE_TEMPLATE, category_config=UNIT_CATEGORIES)
+
+
+@app.route("/history")
+def history_api():
+    entries = _load_history()
+    return jsonify({"items": entries[-8:]})
+
+
+@app.route("/history", methods=["POST"])
+def add_history_entry():
+    data = request.get_json(silent=True) or {}
+    value = data.get("value")
+    result = data.get("result")
+    timestamp = data.get("timestamp") or "Just now"
+
+    if not isinstance(value, str) or not value.strip():
+        return jsonify({"ok": False, "error": "Missing value"}), 400
+
+    entries = _load_history()
+    entries.append({
+        "value": value.strip(),
+        "result": result if isinstance(result, str) else "",
+        "timestamp": timestamp,
+    })
+    _save_history(entries[-20:])
+    return jsonify({"ok": True, "items": entries[-20:]})
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
