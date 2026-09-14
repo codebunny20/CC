@@ -30,3 +30,5 @@ CC-calculator/unit converter offers the following features:
 - I summarized the project’s recent progress in the README so the work is tracked across multiple conversations.
 
 - I added a dated log entry to keep a running record of work completed on the calculator/unit converter.
+
+- I split the ui from the main.py file. The app now renders the UI from the template and static files instead of the remaining inline HTML block in main.py. This improves maintainability and separates the presentation layer from the application logic.

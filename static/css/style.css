@@ -339,7 +339,6 @@ h1 {
     max-height: min(260px, 40vh);
     overflow-y: auto;
     overscroll-behavior: contain;
-    scrollbar-gutter: stable;
     padding: 8px;
     border-radius: 14px;
     border: 1px solid var(--border);
