@@ -294,9 +294,10 @@ h1 {
 }
 
 .converter {
-    padding: 32px;
+    padding: 28px;
     display: grid;
-    gap: 16px;
+    gap: 18px;
+    background: linear-gradient(160deg, var(--panel) 0%, var(--panel-strong) 100%);
 }
 
 .calculator {
@@ -319,6 +320,17 @@ h1 {
     gap: 8px;
 }
 
+.converter .field {
+    gap: 10px;
+}
+
+.converter .field label {
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
 .dropdown {
     position: relative;
 }
@@ -333,10 +345,10 @@ h1 {
     border: 1px solid var(--border);
     font: inherit;
     padding: 14px 15px;
-    background: var(--panel);
+    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-strong) 100%);
     color: var(--ink);
     cursor: pointer;
-    box-shadow: none;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.16);
 }
 
 .dropdown-toggle:focus,
@@ -422,7 +434,11 @@ input:focus, select:focus, button:focus {
 .grid-2 {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    gap: 14px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: rgba(31, 122, 140, 0.03);
 }
 
 button {
@@ -435,23 +451,31 @@ button {
     box-shadow: 0 10px 22px rgba(31, 122, 140, 0.22);
 }
 
+.converter button[id="convertButton"] {
+    padding: 16px 18px;
+    border-radius: 16px;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+}
+
 button:hover {
     transform: translateY(-1px);
 }
 
 .result {
-    padding: 16px;
-    border-radius: 16px;
-    background: var(--result-bg);
+    padding: 18px 18px 16px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, var(--result-bg) 0%, rgba(31, 122, 140, 0.03) 100%);
     border: 1px solid var(--result-border);
-    min-height: 76px;
+    min-height: 92px;
     display: grid;
     align-content: center;
     gap: 4px;
 }
 
 .result strong {
-    font-size: 1.35rem;
+    font-size: 1.4rem;
+    line-height: 1.2;
 }
 
 .result p {

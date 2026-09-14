@@ -104,7 +104,13 @@ UNIT_CATEGORIES = {
         "base": "Meter per second",
         "units": {
             "Meter per second": 1,
+            "Kilometer per hour": 0.2777777777777778,
+            "Mile per hour": 0.44704,
+            "Foot per second": 0.3048,
             "Knot": 0.5144444444444445,
+            "Centimeter per second": 0.01,
+            "Mach": 340.294,
+            "Light speed": 299792458,
         },
     },
     "Force": {
