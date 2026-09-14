@@ -157,6 +157,9 @@
             <button class="settings-close" id="historyCloseButton" type="button" aria-label="Close history">Close</button>
         </div>
         <div class="dialog-body">
+            <div class="settings-actions" role="group" aria-label="History actions">
+                <button class="settings-action danger-action" id="deleteHistoryButton" type="button">Delete history</button>
+            </div>
             <div id="historyList" class="history-list" aria-live="polite"></div>
         </div>
     </aside>
@@ -173,9 +176,7 @@
         </div>
     </aside>
 
-    <script>
-        window.APP_CONFIG = {{ category_config|tojson }};
-    </script>
+    <script id="appConfig" type="application/json">{{ category_config|tojson }}</script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

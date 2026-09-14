@@ -1,5 +1,8 @@
 import unittest
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
+import main
 from main import app, is_valid_conversion
 
 
@@ -38,6 +41,47 @@ class AppTests(unittest.TestCase):
         self.assertTrue(is_valid_conversion("Force", "Kilogram-force", "Gram-force"))
         self.assertTrue(is_valid_conversion("Force", "Kilogram-force", "Kilopond"))
         self.assertFalse(is_valid_conversion("Force", "Newton", "Meter"))
+
+    def test_calculation_helper_matches_expected_math(self):
+        self.assertEqual(main.evaluate_calculation(10, 2, "add"), 12)
+        self.assertEqual(main.evaluate_calculation(10, 2, "subtract"), 8)
+        self.assertEqual(main.evaluate_calculation(10, 2, "multiply"), 20)
+        self.assertEqual(main.evaluate_calculation(10, 2, "divide"), 5)
+
+    def test_calculation_helper_rejects_blank_or_invalid_input(self):
+        with self.assertRaises(ValueError):
+            main.evaluate_calculation("", 2, "add")
+        with self.assertRaises(ValueError):
+            main.evaluate_calculation(10, "abc", "multiply")
+        with self.assertRaises(ZeroDivisionError):
+            main.evaluate_calculation(10, 0, "divide")
+
+    def test_conversion_helper_matches_reference_values(self):
+        self.assertAlmostEqual(main.convert_value(1, "Length", "Meter", "Foot"), 3.280839895013123)
+        self.assertAlmostEqual(main.convert_value(1, "Time", "Hour", "Minute"), 60)
+        self.assertAlmostEqual(main.convert_value(100, "Temperature", "Celsius", "Fahrenheit"), 212)
+        self.assertAlmostEqual(main.convert_value(32, "Temperature", "Fahrenheit", "Celsius"), 0)
+        self.assertAlmostEqual(main.convert_value(1, "Energy", "Kilocalorie", "Joule"), 4184)
+        self.assertAlmostEqual(main.convert_value(1, "Pressure", "Atmosphere", "Pascal"), 101325)
+
+    def test_delete_history_clears_entries(self):
+        with TemporaryDirectory() as temp_dir:
+            temp_history_path = f"{temp_dir}/history.json"
+            with patch.object(main, "HISTORY_PATH", temp_history_path):
+                client = app.test_client()
+                add_response = client.post(
+                    "/history",
+                    json={"value": "1 Meter to Foot", "result": "3.2808399 Foot", "timestamp": "Now"},
+                )
+                self.assertEqual(add_response.status_code, 200)
+
+                delete_response = client.delete("/history")
+                self.assertEqual(delete_response.status_code, 200)
+                self.assertEqual(delete_response.get_json(), {"ok": True, "items": []})
+
+                history_response = client.get("/history")
+                self.assertEqual(history_response.status_code, 200)
+                self.assertEqual(history_response.get_json(), {"items": []})
 
 
 if __name__ == "__main__":

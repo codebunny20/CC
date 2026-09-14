@@ -1,4 +1,5 @@
 import json
+import math
 import os
 
 from flask import Flask, jsonify, render_template, request
@@ -150,6 +151,7 @@ UNIT_CATEGORIES = {
         "units": ["Decibel"],
     },
 }
+
 def _load_history():
     try:
         with open(HISTORY_PATH, "r", encoding="utf-8") as history_file:
@@ -165,6 +167,89 @@ def _save_history(entries):
             json.dump(entries, history_file, indent=2)
     except OSError:
         pass
+
+
+def _coerce_numeric(value):
+    if value is None or isinstance(value, bool):
+        raise ValueError("Value is required")
+
+    if isinstance(value, (int, float)):
+        number = float(value)
+    elif isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("Value is required")
+        try:
+            number = float(stripped)
+        except ValueError as exc:
+            raise ValueError("Value must be numeric") from exc
+    else:
+        raise ValueError("Value must be numeric")
+
+    if not math.isfinite(number):
+        raise ValueError("Value must be finite")
+    return number
+
+
+def _convert_temperature(value, from_unit, to_unit):
+    to_kelvin = {
+        "Kelvin": lambda x: x,
+        "Celsius": lambda x: x + 273.15,
+        "Fahrenheit": lambda x: ((x + 459.67) * 5) / 9,
+        "Rankine": lambda x: (x * 5) / 9,
+    }
+    from_kelvin = {
+        "Kelvin": lambda x: x,
+        "Celsius": lambda x: x - 273.15,
+        "Fahrenheit": lambda x: (x * 9) / 5 - 459.67,
+        "Rankine": lambda x: (x * 9) / 5,
+    }
+    return from_kelvin[to_unit](to_kelvin[from_unit](value))
+
+
+def evaluate_calculation(value1, value2, operation):
+    left = _coerce_numeric(value1)
+    right = _coerce_numeric(value2)
+    op = (operation or "").strip().lower()
+
+    if op == "add":
+        return left + right
+    if op == "subtract":
+        return left - right
+    if op == "multiply":
+        return left * right
+    if op == "divide":
+        if right == 0:
+            raise ZeroDivisionError("Cannot divide by zero")
+        return left / right
+
+    raise ValueError(f"Unsupported operation: {operation}")
+
+
+def convert_value(value, category, from_unit, to_unit):
+    numeric_value = _coerce_numeric(value)
+    config = UNIT_CATEGORIES.get(category)
+    if not config:
+        raise ValueError(f"Unknown category: {category}")
+    if not from_unit or not to_unit:
+        raise ValueError("Both units are required")
+
+    if config["type"] == "temperature":
+        if from_unit not in config["units"] or to_unit not in config["units"]:
+            raise ValueError("Temperature conversion requires valid units from the same category")
+        return _convert_temperature(numeric_value, from_unit, to_unit)
+
+    if config["type"] == "linear":
+        if from_unit not in config["units"] or to_unit not in config["units"]:
+            raise ValueError("Linear conversion requires valid units from the same category")
+        return numeric_value * config["units"][from_unit] / config["units"][to_unit]
+
+    if config["type"] == "reference":
+        if from_unit != to_unit or from_unit not in config["units"]:
+            raise ValueError("Reference units must match exactly")
+        return numeric_value
+
+    raise ValueError(f"Unsupported category type: {config['type']}")
 
 
 def is_valid_conversion(category, from_unit, to_unit):
@@ -216,6 +301,12 @@ def add_history_entry():
     })
     _save_history(entries[-20:])
     return jsonify({"ok": True, "items": entries[-20:]})
+
+
+@app.route("/history", methods=["DELETE"])
+def delete_history():
+    _save_history([])
+    return jsonify({"ok": True, "items": []})
 
 
 if __name__ == "__main__":

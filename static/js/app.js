@@ -1,4 +1,11 @@
-const categoryConfig = window.APP_CONFIG;
+const appConfigElement = document.getElementById("appConfig");
+let categoryConfig = {};
+
+try {
+    categoryConfig = appConfigElement ? JSON.parse(appConfigElement.textContent || "{}") : {};
+} catch (error) {
+    categoryConfig = {};
+}
 const temperatureUnits = ["Kelvin", "Celsius", "Fahrenheit", "Rankine"];
 
 const appShell = document.getElementById("appShell");
@@ -9,6 +16,7 @@ const historyButton = document.getElementById("historyButton");
 const historyWindow = document.getElementById("historyWindow");
 const historyCloseButton = document.getElementById("historyCloseButton");
 const historyList = document.getElementById("historyList");
+const deleteHistoryButton = document.getElementById("deleteHistoryButton");
 const helpButton = document.getElementById("helpActionButton");
 const helpWindow = document.getElementById("helpWindow");
 const helpCloseButton = document.getElementById("helpCloseButton");
@@ -142,6 +150,20 @@ function formatNumber(value) {
     return Number(value.toFixed(8)).toString();
 }
 
+function readNumericInput(inputElement) {
+    if (!inputElement) {
+        return Number.NaN;
+    }
+
+    const rawValue = inputElement.value;
+    if (typeof rawValue !== "string" || rawValue.trim() === "") {
+        return Number.NaN;
+    }
+
+    const parsedValue = Number(rawValue);
+    return Number.isFinite(parsedValue) ? parsedValue : Number.NaN;
+}
+
 function setMode(mode) {
     if (!appShell) {
         return;
@@ -152,9 +174,9 @@ function setMode(mode) {
     converterModeButton.classList.toggle("active", mode === "converter");
 }
 
-function calculateValue() {
-    const value1 = Number(calculatorValue1.value);
-    const value2 = Number(calculatorValue2.value);
+function calculateValue(recordHistory = false) {
+    const value1 = readNumericInput(calculatorValue1);
+    const value2 = readNumericInput(calculatorValue2);
     const operation = calculatorOperation.value;
 
     if (Number.isNaN(value1) || Number.isNaN(value2)) {
@@ -163,6 +185,12 @@ function calculateValue() {
     }
 
     let result = 0;
+    const operationSymbolMap = {
+        add: "+",
+        subtract: "-",
+        multiply: "*",
+        divide: "/",
+    };
 
     if (operation === "add") {
         result = value1 + value2;
@@ -179,7 +207,14 @@ function calculateValue() {
         result = value1 / value2;
     }
 
-    calculatorResult.innerHTML = `<strong>${formatNumber(result)}</strong><p>${value1} ${operation} ${value2} = ${formatNumber(result)}</p>`;
+    const operationSymbol = operationSymbolMap[operation] || operation;
+    const formattedResult = formatNumber(result);
+    const expression = `${value1} ${operationSymbol} ${value2}`;
+    calculatorResult.innerHTML = `<strong>${formattedResult}</strong><p>${expression} = ${formattedResult}</p>`;
+
+    if (recordHistory) {
+        saveHistoryEntry(`Calculation: ${expression}`, `${expression} = ${formattedResult}`);
+    }
 }
 
 function closeDropdowns(exceptKey = null) {
@@ -362,7 +397,7 @@ function isValidConversion(category, fromUnit, toUnit) {
 
 function convertValue() {
     const category = categorySelect.value;
-    const value = Number(valueInput.value);
+    const value = readNumericInput(valueInput);
     const fromUnit = fromUnitSelect.value;
     const toUnit = toUnitSelect.value;
     const config = categoryConfig[category];
@@ -395,7 +430,7 @@ function convertValue() {
 
 function convertAndRecordHistory() {
     const category = categorySelect.value;
-    const value = Number(valueInput.value);
+    const value = readNumericInput(valueInput);
     const fromUnit = fromUnitSelect.value;
     const toUnit = toUnitSelect.value;
     const config = categoryConfig[category];
@@ -432,7 +467,7 @@ function renderHistoryEntries(items) {
         return;
     }
 
-    const entries = Array.isArray(items) && items.length ? items : [{ value: "No conversion history yet.", result: "Start converting to build your log.", timestamp: "" }];
+    const entries = Array.isArray(items) && items.length ? items : [{ value: "No history yet.", result: "Start converting or calculating to build your log.", timestamp: "" }];
     historyList.innerHTML = entries
         .slice(0, 8)
         .map((entry) => {
@@ -459,8 +494,46 @@ async function loadHistory() {
     }
 }
 
+async function clearHistory() {
+    try {
+        const response = await fetch("/history", { method: "DELETE" });
+        if (!response.ok) {
+            return;
+        }
+
+        renderHistoryEntries([]);
+    } catch (error) {
+        // Ignore network errors; existing history stays visible.
+    }
+}
+
 function populateCategories() {
-    const categories = Object.keys(categoryConfig);
+    const priority = [
+        "Length",
+        "Mass",
+        "Temperature",
+        "Time",
+        "Volume",
+        "Energy",
+        "Pressure",
+        "Speed",
+        "Force",
+        "Electricity",
+        "Illumination",
+        "Luminous intensity",
+        "Radiation",
+        "Magnetism",
+        "Sound level",
+    ];
+
+    const categories = Object.keys(categoryConfig).sort((a, b) => {
+        const aIndex = priority.indexOf(a);
+        const bIndex = priority.indexOf(b);
+        const aRank = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+        const bRank = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+        return aRank - bRank || a.localeCompare(b);
+    });
+
     setOptions(categorySelect, categories);
 }
 
@@ -474,6 +547,9 @@ if (categorySelect && fromUnitSelect && toUnitSelect && valueInput && resultBox 
     historyButton.addEventListener("click", () => toggleHistoryWindow());
     historyActionButton.addEventListener("click", () => toggleHistoryWindow());
     historyCloseButton.addEventListener("click", () => toggleHistoryWindow(false));
+    if (deleteHistoryButton) {
+        deleteHistoryButton.addEventListener("click", clearHistory);
+    }
     helpButton.addEventListener("click", () => toggleHelpWindow());
     helpCloseButton.addEventListener("click", () => toggleHelpWindow(false));
     document.addEventListener("click", (event) => {
@@ -497,7 +573,7 @@ if (categorySelect && fromUnitSelect && toUnitSelect && valueInput && resultBox 
     settingsThemeButtons.forEach((button) => {
         button.addEventListener("click", () => setTheme(button.dataset.theme));
     });
-    calculateButton.addEventListener("click", calculateValue);
+    calculateButton.addEventListener("click", () => calculateValue(true));
     calculatorValue1.addEventListener("input", calculateValue);
     calculatorValue2.addEventListener("input", calculateValue);
     calculatorOperation.addEventListener("change", calculateValue);
