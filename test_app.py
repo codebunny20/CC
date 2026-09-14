@@ -21,6 +21,13 @@ class AppTests(unittest.TestCase):
         self.assertIn(b"Pound-force", response.data)
         self.assertIn(b"Meganewton", response.data)
 
+    def test_home_page_uses_separate_static_assets(self):
+        client = app.test_client()
+        response = client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'/static/css/style.css', response.data)
+        self.assertIn(b'/static/js/app.js', response.data)
+
     def test_valid_conversion_requires_same_category(self):
         self.assertTrue(is_valid_conversion("Energy", "Calorie", "Joule"))
         self.assertFalse(is_valid_conversion("Energy", "Calorie", "Meter"))

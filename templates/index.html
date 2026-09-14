@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CC Unit Converter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <main class="shell" id="appShell" data-mode="converter">
+        <section class="card hero topbar">
+            <div>
+                <p class="eyebrow">CC Calculator + Converter</p>
+                <h1>Switch instantly between calculations and unit conversion.</h1>
+                <p class="lede">
+                    Use calculator mode for quick math, or switch to converter mode for length, mass, temperature,
+                    time, volume, energy, pressure, speed, and specialized measurement units.
+                </p>
+            </div>
+
+            <div class="header-actions">
+                <div class="mode-switch" role="tablist" aria-label="App mode">
+                    <button class="mode-button active" id="calculatorModeButton" type="button">Calculator</button>
+                    <button class="mode-button" id="converterModeButton" type="button">Converter</button>
+                </div>
+
+                <button class="mode-button history-button" id="historyButton" type="button" aria-label="History" aria-expanded="false">🕘 History</button>
+                <button class="mode-button settings-button" id="settingsButton" type="button" aria-label="Settings" aria-expanded="false">⚙ Settings</button>
+            </div>
+        </section>
+
+        <section class="card calculator panel" aria-label="Calculator panel">
+            <div class="field">
+                <label for="calculatorValue1">First value</label>
+                <input id="calculatorValue1" type="number" inputmode="decimal" value="1" />
+            </div>
+
+            <div class="operation-grid">
+                <div class="field">
+                    <label for="calculatorValue2">Second value</label>
+                    <input id="calculatorValue2" type="number" inputmode="decimal" value="1" />
+                </div>
+
+                <div class="operator" aria-hidden="true">=</div>
+
+                <div class="field">
+                    <label for="calculatorOperation">Operation</label>
+                    <select id="calculatorOperation">
+                        <option value="add">Add</option>
+                        <option value="subtract">Subtract</option>
+                        <option value="multiply">Multiply</option>
+                        <option value="divide">Divide</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="calculateButton" type="button">Calculate</button>
+
+            <div class="result" id="calculatorResult" aria-live="polite">
+                <strong>Result will appear here</strong>
+                <p>Enter values and choose an operation.</p>
+            </div>
+        </section>
+
+        <section class="card converter panel" aria-label="Unit converter panel">
+            <div class="field">
+                <label for="category">Category</label>
+                <div id="categoryDropdown" class="dropdown" aria-label="Category selector">
+                    <button id="categoryToggle" class="dropdown-toggle" type="button" aria-expanded="false" aria-controls="categoryMenu">
+                        <span id="categoryLabel">Select a category</span>
+                        <span class="chevron" aria-hidden="true">▾</span>
+                    </button>
+                    <div id="categoryMenu" class="dropdown-menu" role="listbox" aria-label="Category options"></div>
+                </div>
+                <select id="category" class="select-hidden"></select>
+            </div>
+
+            <div class="field">
+                <label for="value">Value</label>
+                <input id="value" type="number" inputmode="decimal" value="1" />
+            </div>
+
+            <div class="grid-2">
+                <div class="field">
+                    <label for="fromUnit">From</label>
+                    <div id="fromUnitDropdown" class="dropdown" aria-label="From unit selector">
+                        <button id="fromUnitToggle" class="dropdown-toggle" type="button" aria-expanded="false" aria-controls="fromUnitMenu">
+                            <span id="fromUnitLabel">Select a unit</span>
+                            <span class="chevron" aria-hidden="true">▾</span>
+                        </button>
+                        <div id="fromUnitMenu" class="dropdown-menu" role="listbox" aria-label="From unit options"></div>
+                    </div>
+                    <select id="fromUnit" class="select-hidden"></select>
+                </div>
+                <div class="field">
+                    <label for="toUnit">To</label>
+                    <div id="toUnitDropdown" class="dropdown" aria-label="To unit selector">
+                        <button id="toUnitToggle" class="dropdown-toggle" type="button" aria-expanded="false" aria-controls="toUnitMenu">
+                            <span id="toUnitLabel">Select a unit</span>
+                            <span class="chevron" aria-hidden="true">▾</span>
+                        </button>
+                        <div id="toUnitMenu" class="dropdown-menu" role="listbox" aria-label="To unit options"></div>
+                    </div>
+                    <select id="toUnit" class="select-hidden"></select>
+                </div>
+            </div>
+
+            <button id="convertButton" type="button">Convert</button>
+
+            <div class="result" id="result" aria-live="polite">
+                <strong>Result will appear here</strong>
+                <p>Select a category and unit pair to convert.</p>
+            </div>
+        </section>
+
+        <section class="card side">
+            <h2>Included units</h2>
+            <p class="lede" style="margin: 0; font-size: 0.95rem;">
+                The converter includes every unit i can think of at the moment. Where a unit is a reference quantity rather than a
+                directly convertible scale, it is still available in the catalog.
+            </p>
+            <ul class="unit-list">
+                <li>Length, mass, temperature, time, volume, energy, pressure, and speed</li>
+                <li>Electricity, illumination, luminous intensity, radiation, magnetism, force, and sound level</li>
+                <li>Meter, kilometer, inch, foot, mile, kilogram, pound, joule, calorie, pascal, newton, dyne, lbf, kgf, and more</li>
+            </ul>
+        </section>
+    </main>
+
+    <aside class="settings-window" id="settingsWindow" role="dialog" aria-modal="true" aria-label="Settings panel">
+        <div class="settings-header">
+            <h3>Settings</h3>
+            <button class="settings-close" id="settingsCloseButton" type="button" aria-label="Close settings">Close</button>
+        </div>
+
+        <div class="settings-section">
+            <div class="settings-label">Appearance</div>
+            <div class="settings-options" role="tablist" aria-label="Theme selection">
+                <button class="settings-option active" data-theme="light" type="button">Light</button>
+                <button class="settings-option" data-theme="dark" type="button">Dark</button>
+                <button class="settings-option" data-theme="system" type="button">System</button>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="settings-label">Quick actions</div>
+            <div class="settings-actions" role="group" aria-label="History and help actions">
+                <button class="settings-action" id="historyActionButton" type="button">History</button>
+                <button class="settings-action" id="helpActionButton" type="button">Help</button>
+            </div>
+        </div>
+    </aside>
+
+    <aside class="dialog-window" id="historyWindow" role="dialog" aria-modal="true" aria-label="History panel">
+        <div class="settings-header">
+            <h3>History</h3>
+            <button class="settings-close" id="historyCloseButton" type="button" aria-label="Close history">Close</button>
+        </div>
+        <div class="dialog-body">
+            <div id="historyList" class="history-list" aria-live="polite"></div>
+        </div>
+    </aside>
+
+    <aside class="dialog-window" id="helpWindow" role="dialog" aria-modal="true" aria-label="Help panel">
+        <div class="settings-header">
+            <h3>Help</h3>
+            <button class="settings-close" id="helpCloseButton" type="button" aria-label="Close help">Close</button>
+        </div>
+        <div class="dialog-body">
+            <p>Use Calculator mode for arithmetic and Converter mode for unit conversion between supported categories.</p>
+            <p>Pick a category, choose the units to convert, and use the result box for quick calculations.</p>
+            <p>Theme changes persist in your browser, and the history window keeps a recent log of your actions.</p>
+        </div>
+    </aside>
+
+    <script>
+        window.APP_CONFIG = {{ category_config|tojson }};
+    </script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

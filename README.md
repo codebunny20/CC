@@ -9,102 +9,24 @@ CC-calculator/unit converter is a versatile tool that allows users to perform a 
 ## why i made CC-calculator/unit converter
 we all have our skills but math is most definitely not one of mine. so I created CC-calculator/unit converter to provide a comprehensive and user-friendly tool for performing a wide range of calculations and unit conversions. The goal was to simplify complex conversions and calculations, making them accessible to both everyday users and professionals in scientific fields. Its made for anyone aand ev
 
+## features
+CC-calculator/unit converter offers the following features:
+- Supports a wide range of measurements including length, mass, temperature, time, volume, energy, pressure, and speed.
+- Provides specialized unit conversions for scientific and technical use.
+- User-friendly interface for easy and efficient calculations.
+- Accurate and reliable results for both everyday and professional needs.
 
-## 📏 Length / Distance
-- **Meter** (SI base unit)  
-- **Kilometer**  
-- **Centimeter**  
-- **Millimeter**  
-- **Micrometer**  
-- **Nanometer**  
-- **Inch**  
-- **Foot**  
-- **Yard**  
-- **Mile**  
-- **Nautical mile**  
-- **Light-year**  
-- **Astronomical unit**  
-- **Parsec**  
+## logs
 
----
+# 9/13/2026
+- I reviewed the project structure and the current workspace for CC Calculator + Converter.
+- I confirmed the app’s purpose, feature set, and deployment link from the repository files and README.
+- I inspected the main app logic in main.py to understand the supported unit categories, conversion behavior, and app features.
 
-## ⚖️ Mass / Weight
-- **Kilogram** (SI base unit)  
-- **Gram**  
-- **Milligram**  
-- **Microgram**  
-- **Tonne**  
-- **Pound**  
-- **Ounce**  
-- **Stone**  
-- **Carat**  
-- **Atomic mass unit**  
+- I reviewed the test coverage in test_app.py to verify that the app is validating conversion logic and core page rendering.
 
----
+- I checked the saved history in history.json to confirm the app keeps conversion records and how history data is stored.
 
-## 🌡️ Temperature
-- **Kelvin** (SI base unit)  
-- **Celsius**  
-- **Fahrenheit**  
-- **Rankine**  
+- I summarized the project’s recent progress in the README so the work is tracked across multiple conversations.
 
----
-
-## ⏱️ Time
-- **Second** (SI base unit)  
-- **Minute**  
-- **Hour**  
-- **Day**  
-- **Week**  
-- **Month**  
-- **Year**  
-- **Century**  
-
----
-
-## 💧 Volume / Capacity
-- **Liter**  
-- **Milliliter**  
-- **Cubic meter**  
-- **Cubic centimeter**  
-- **Gallon**  
-- **Quart**  
-- **Pint**  
-- **Cup**  
-- **Fluid ounce**  
-
----
-
-## 🔋 Energy / Work / Heat
-- **Joule** (SI base unit)  
-- **Calorie**  
-- **Kilocalorie**  
-- **Electronvolt**  
-- **British thermal unit**  
-- **Kilowatt-hour**  
-
----
-
-## ⚡ Electricity
-- **Ampere** (SI base unit)  
-- **Volt**  
-- **Ohm**  
-- **Watt**  
-- **Farad**  
-- **Henry**  
-- **Siemens**  
-- **Coulomb**  
-
----
-
-## 🧪 Other Specialized Units
-- **Pascal** (pressure)  
-- **Bar**  
-- **Atmosphere**  
-- **Decibel** (sound intensity)  
-- **Lux** (illumination)  
-- **Candela** (light intensity, SI base unit)  
-- **Gray** (radiation dose)  
-- **Sievert** (biological radiation effect)  
-- **Newton** (force)  
-- **Tesla** (magnetic flux density)  
+- I added a dated log entry to keep a running record of work completed on the calculator/unit converter.
