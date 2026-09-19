@@ -232,6 +232,28 @@ def evaluate_calculation(value1, value2, operation):
     raise ValueError(f"Unsupported operation: {operation}")
 
 
+def calculate_coupon_result(price, discount_value, discount_type):
+    price_value = _coerce_numeric(price)
+    discount_value_value = _coerce_numeric(discount_value)
+
+    if price_value < 0:
+        raise ValueError("Price must be non-negative")
+    if discount_value_value < 0:
+        raise ValueError("Discount must be non-negative")
+
+    normalized_type = (discount_type or "").strip().lower()
+    if normalized_type == "percent":
+        capped_percentage = min(max(discount_value_value, 0), 100)
+        savings = min(price_value * capped_percentage / 100, price_value)
+    elif normalized_type == "amount":
+        savings = min(discount_value_value, price_value)
+    else:
+        raise ValueError(f"Unsupported discount type: {discount_type}")
+
+    final_price = max(price_value - savings, 0)
+    return final_price, savings
+
+
 def convert_value(value, category, from_unit, to_unit):
     numeric_value = _coerce_numeric(value)
     config = UNIT_CATEGORIES.get(category)

@@ -1,57 +1,102 @@
 [
   {
-    "value": "Calculation: 1 + 1",
-    "result": "1 + 1 = 2",
-    "timestamp": "9/13/2026, 9:53:01 PM"
+    "value": "Coupon: 9 with 8% off",
+    "result": "Final price 8.28 (saved 0.72)",
+    "timestamp": "9/18/2026, 11:07:03 PM"
   },
   {
-    "value": "10000 Centimeter to Foot",
-    "result": "10000 Centimeter = 328.0839895 Foot",
-    "timestamp": "9/13/2026, 9:55:07 PM"
+    "value": "Coupon: 9 with 9% off",
+    "result": "Final price 8.19 (saved 0.81)",
+    "timestamp": "9/18/2026, 11:07:03 PM"
   },
   {
-    "value": "1 Fahrenheit to Celsius",
-    "result": "1 Fahrenheit = -17.22222222 Celsius",
-    "timestamp": "9/13/2026, 10:29:49 PM"
+    "value": "Coupon: 9 with 13% off",
+    "result": "Final price 7.83 (saved 1.17)",
+    "timestamp": "9/18/2026, 11:07:04 PM"
   },
   {
-    "value": "Coupon: 100 with 10% off",
-    "result": "Final price 90 (saved 10)",
-    "timestamp": "9/18/2026, 12:52:16 AM"
+    "value": "Coupon: 9 with 14% off",
+    "result": "Final price 7.74 (saved 1.26)",
+    "timestamp": "9/18/2026, 11:07:05 PM"
   },
   {
-    "value": "Coupon: 101 with 10% off",
-    "result": "Final price 90.9 (saved 10.1)",
-    "timestamp": "9/18/2026, 12:52:33 AM"
+    "value": "Coupon: 9 with 15% off",
+    "result": "Final price 7.65 (saved 1.35)",
+    "timestamp": "9/18/2026, 11:07:05 PM"
   },
   {
-    "value": "Coupon: 102 with 10% off",
-    "result": "Final price 91.8 (saved 10.2)",
-    "timestamp": "9/18/2026, 12:52:34 AM"
+    "value": "Coupon: 9 with 16% off",
+    "result": "Final price 7.56 (saved 1.44)",
+    "timestamp": "9/18/2026, 11:07:06 PM"
   },
   {
-    "value": "Coupon: 5 with 10% off",
-    "result": "Final price 4.5 (saved 0.5)",
-    "timestamp": "9/18/2026, 12:52:42 AM"
+    "value": "Coupon: 9 with 27% off",
+    "result": "Final price 6.57 (saved 2.43)",
+    "timestamp": "9/18/2026, 11:07:07 PM"
   },
   {
-    "value": "Coupon: 50 with 10% off",
-    "result": "Final price 45 (saved 5)",
-    "timestamp": "9/18/2026, 12:52:43 AM"
+    "value": "Coupon: 9 with 28% off",
+    "result": "Final price 6.48 (saved 2.52)",
+    "timestamp": "9/18/2026, 11:07:08 PM"
   },
   {
-    "value": "Coupon: 500 with 10% off",
-    "result": "Final price 450 (saved 50)",
-    "timestamp": "9/18/2026, 12:52:43 AM"
+    "value": "Coupon: 9 with 29% off",
+    "result": "Final price 6.39 (saved 2.61)",
+    "timestamp": "9/18/2026, 11:07:17 PM"
   },
   {
-    "value": "Coupon: 500 with 1% off",
-    "result": "Final price 495 (saved 5)",
-    "timestamp": "9/18/2026, 12:54:08 AM"
+    "value": "Coupon: 10 with 29 off",
+    "result": "Final price 0 (saved 10)",
+    "timestamp": "9/18/2026, 11:07:33 PM"
   },
   {
-    "value": "Coupon: 500 with 13% off",
-    "result": "Final price 435 (saved 65)",
-    "timestamp": "9/18/2026, 12:54:08 AM"
+    "value": "Coupon: 11 with 29 off",
+    "result": "Final price 0 (saved 11)",
+    "timestamp": "9/18/2026, 11:07:33 PM"
+  },
+  {
+    "value": "Coupon: 11 with 28 off",
+    "result": "Final price 0 (saved 11)",
+    "timestamp": "9/18/2026, 11:07:42 PM"
+  },
+  {
+    "value": "Coupon: 11 with 26 off",
+    "result": "Final price 0 (saved 11)",
+    "timestamp": "9/18/2026, 11:07:42 PM"
+  },
+  {
+    "value": "Coupon: 11 with 25 off",
+    "result": "Final price 0 (saved 11)",
+    "timestamp": "9/18/2026, 11:07:43 PM"
+  },
+  {
+    "value": "Coupon: 11 with 4 off",
+    "result": "Final price 7 (saved 4)",
+    "timestamp": "9/18/2026, 11:07:47 PM"
+  },
+  {
+    "value": "Coupon: 1 with 4 off",
+    "result": "Final price 0 (saved 1)",
+    "timestamp": "9/18/2026, 11:08:04 PM"
+  },
+  {
+    "value": "Coupon: 10 with 4 off",
+    "result": "Final price 6 (saved 4)",
+    "timestamp": "9/18/2026, 11:08:05 PM"
+  },
+  {
+    "value": "Coupon: 9 with 4 off",
+    "result": "Final price 5 (saved 4)",
+    "timestamp": "9/18/2026, 11:08:05 PM"
+  },
+  {
+    "value": "Coupon: 1 with 4 off",
+    "result": "Final price 0 (saved 1)",
+    "timestamp": "9/18/2026, 11:08:16 PM"
+  },
+  {
+    "value": "Coupon: 10 with 4 off",
+    "result": "Final price 6 (saved 4)",
+    "timestamp": "9/18/2026, 11:08:16 PM"
   }
 ]

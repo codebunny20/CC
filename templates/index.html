@@ -4,66 +4,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CC Studio | Calculator + Converter</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=7">
 </head>
 <body>
     <main class="shell" id="appShell" data-mode="calculator">
-        <section class="card hero topbar">
-            <div class="hero-copy">
+        <section class="card app-header">
+            <div class="app-header-copy">
                 <p class="eyebrow">CC Studio</p>
-                <h1>Welcome to CC Studio, a calm workspace for calculations, coupons, and unit conversion.</h1>
-                <p class="lede">
-                    This app helps perform calculations, calculate coupons, and convert units efficiently,
-                    It's meant to help with everyday calculations like discounts, and converting units seamlessly.
-                </p>
-
-                <div class="hero-chips" aria-label="Highlights">
-                    <span class="hero-chip">Arithmetic</span>
-                    <span class="hero-chip">Coupon pricing</span>
-                    <span class="hero-chip">Unit conversion</span>
-                    <span class="hero-chip">Saved history</span>
-                </div>
+                <h1>Calculator + Converter</h1>
+                <p class="lede">One workspace for arithmetic, coupon checks, and unit conversion.</p>
             </div>
 
-            <div class="hero-actions">
+            <div class="app-header-controls">
                 <div class="mode-switch" role="group" aria-label="App mode">
                     <button class="mode-button active" id="calculatorModeButton" type="button">Calculator</button>
                     <button class="mode-button" id="converterModeButton" type="button">Converter</button>
                 </div>
-
-                <div class="header-actions">
-                    <button class="mode-button history-button" id="historyButton" type="button" aria-label="History" aria-expanded="false">History</button>
-                    <button class="mode-button settings-button" id="settingsButton" type="button" aria-label="Settings" aria-expanded="false">Settings</button>
-                </div>
-
-                <p class="hero-caption">Switch modes with one tap. Your changes, themes, and recent activity stay in view.</p>
             </div>
         </section>
 
-        <section class="workspace">
+        <section class="layout-grid">
+            <aside class="card utility-rail" aria-label="Quick tools">
+                <h2 class="rail-title">Workspace</h2>
+                <p class="rail-copy">Open settings, review history, and switch tasks without leaving the current panel.</p>
+                <div class="rail-actions">
+                    <button class="mode-button history-button" id="historyButton" type="button" aria-label="History" aria-expanded="false">History</button>
+                    <button class="mode-button settings-button" id="settingsButton" type="button" aria-label="Settings" aria-expanded="false">Settings</button>
+                </div>
+                <ul class="rail-notes" aria-label="Workspace notes">
+                    <li>Use calculator mode for arithmetic and coupons.</li>
+                    <li>Use converter mode for unit conversions by category.</li>
+                    <li>Recent actions are saved in history.</li>
+                </ul>
+            </aside>
+
             <div class="workspace-main">
-                <section class="card calculator panel" aria-label="Calculator panel">
+                <section class="card calculator panel" id="calculatorPanel" data-calculator-tool="standard" aria-label="Calculator panel">
                     <div class="panel-header">
                         <div>
                             <p class="section-kicker">Calculator mode</p>
-                            <h2>Quick arithmetic and coupon pricing without the clutter.</h2>
-                            <p class="panel-summary">
-                                Use the calculator for everyday math, then jump into coupon pricing when you want a quick discount check.
-                            </p>
+                            <h2>Arithmetic and coupon pricing</h2>
+                            <p class="panel-summary">Use quick math for everyday checks, then apply coupon logic when needed.</p>
                         </div>
 
-                        <div class="panel-pills" aria-label="Calculator highlights">
-                            <span>4 operations</span>
-                            <span>Live results</span>
-                            <span>History saved</span>
-                        </div>
+                    </div>
+
+                    <div class="calculator-tool-switch" role="group" aria-label="Calculator type">
+                        <button class="calculator-tool-button active" id="standardCalculatorButton" data-calculator-tool="standard" type="button">Standard</button>
+                        <button class="calculator-tool-button" id="couponCalculatorButton" data-calculator-tool="coupon" type="button">Coupon</button>
                     </div>
 
                     <div class="tool-grid">
-                        <article class="tool-card">
+                        <article class="tool-card calculator-tool-card" data-calculator-tool="standard">
                             <div class="tool-card-head">
                                 <p class="tool-label">Standard calculator</p>
-                                <h3>Numbers in, answer out.</h3>
+                                <h3>Standard calculator</h3>
                             </div>
 
                             <div class="field">
@@ -98,10 +93,10 @@
                             </div>
                         </article>
 
-                        <article class="tool-card tool-card-accent">
+                        <article class="tool-card tool-card-accent calculator-tool-card" data-calculator-tool="coupon">
                             <div class="tool-card-head">
                                 <p class="tool-label">Coupon calculator</p>
-                                <h3>Preview the discounted total before you buy.</h3>
+                                <h3>Coupon preview</h3>
                             </div>
 
                             <div class="grid-2">
@@ -138,24 +133,17 @@
                     <div class="panel-header">
                         <div>
                             <p class="section-kicker">Converter mode</p>
-                            <h2>Choose a category, then convert with fewer hops and clearer labels.</h2>
-                            <p class="panel-summary">
-                                The converter keeps unit groups organized so you can move between values without losing context.
-                            </p>
+                            <h2>Unit conversion</h2>
+                            <p class="panel-summary">Pick a category, then convert between units with focused controls.</p>
                         </div>
 
-                        <div class="panel-pills" aria-label="Converter highlights">
-                            <span>Smart categories</span>
-                            <span>Direct feedback</span>
-                            <span>Reference units</span>
-                        </div>
                     </div>
 
                     <div class="tool-grid">
                         <article class="tool-card">
                             <div class="tool-card-head">
                                 <p class="tool-label">Conversion builder</p>
-                                <h3>Pick a unit family, then choose the direction.</h3>
+                                <h3>Conversion builder</h3>
                             </div>
 
                             <div class="field">
@@ -211,26 +199,10 @@
 
                         <article class="tool-card tool-card-accent">
                             <div class="tool-card-head">
-                                <p class="tool-label">Conversion guide</p>
-                                <h3>Built for fast scan, not hunting through a long form.</h3>
+                                <p class="tool-label">Included families</p>
+                                <h3>Available unit families</h3>
                             </div>
 
-                            <div class="feature-grid converter-guide-grid">
-                                <article class="mini-card">
-                                    <strong>Step 1</strong>
-                                    <p>Choose the category first so the unit menus stay relevant.</p>
-                                </article>
-                                <article class="mini-card">
-                                    <strong>Step 2</strong>
-                                    <p>Pick from and to units from the same family for immediate feedback.</p>
-                                </article>
-                                <article class="mini-card">
-                                    <strong>Step 3</strong>
-                                    <p>Use reference categories when the same value must be preserved.</p>
-                                </article>
-                            </div>
-
-                            <h4 class="compact-title">Included families</h4>
                             <ul class="unit-list compact-list">
                                 <li>Length, mass, temperature, time, volume, energy, pressure, and speed</li>
                                 <li>Electricity, illumination, luminous intensity, radiation, magnetism, force, and sound level</li>
@@ -293,6 +265,6 @@
     </aside>
 
     <script id="appConfig" type="application/json">{{ category_config|tojson }}</script>
-    <script src="{{ url_for('static', filename='js/app.js') }}?v=4"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=7"></script>
 </body>
 </html>

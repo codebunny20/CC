@@ -36,6 +36,8 @@ const couponValueInput = document.getElementById("couponValue");
 const couponValueLabel = document.getElementById("couponValueLabel");
 const couponCalculateButton = document.getElementById("couponCalculateButton");
 const couponResult = document.getElementById("couponResult");
+const calculatorPanel = document.getElementById("calculatorPanel");
+const calculatorToolButtons = Array.from(document.querySelectorAll(".calculator-tool-button"));
 
 const categorySelect = document.getElementById("category");
 const fromUnitSelect = document.getElementById("fromUnit");
@@ -51,6 +53,14 @@ const toUnitToggle = document.getElementById("toUnitToggle");
 const toUnitLabel = document.getElementById("toUnitLabel");
 const dropdownState = {};
 
+function debounce(callback, wait = 220) {
+    let timeoutId;
+    return (...args) => {
+        window.clearTimeout(timeoutId);
+        timeoutId = window.setTimeout(() => callback(...args), wait);
+    };
+}
+
 function getStoredTheme() {
     try {
         return window.localStorage.getItem("cc-theme") || "system";
@@ -64,6 +74,15 @@ function getStoredSettingsOpen() {
         return window.localStorage.getItem("cc-settings-open") === "true";
     } catch (error) {
         return false;
+    }
+}
+
+function getStoredCalculatorTool() {
+    try {
+        const stored = window.localStorage.getItem("cc-calculator-tool");
+        return stored === "coupon" ? "coupon" : "standard";
+    } catch (error) {
+        return "standard";
     }
 }
 
@@ -176,9 +195,35 @@ function setMode(mode) {
     }
 
     appShell.dataset.mode = mode;
-    calculatorModeButton.classList.toggle("active", mode === "calculator");
-    converterModeButton.classList.toggle("active", mode === "converter");
+    if (calculatorModeButton) {
+        calculatorModeButton.classList.toggle("active", mode === "calculator");
+        calculatorModeButton.setAttribute("aria-pressed", mode === "calculator" ? "true" : "false");
+    }
+    if (converterModeButton) {
+        converterModeButton.classList.toggle("active", mode === "converter");
+        converterModeButton.setAttribute("aria-pressed", mode === "converter" ? "true" : "false");
+    }
     closeDropdowns();
+}
+
+function setCalculatorTool(tool) {
+    const nextTool = tool === "coupon" ? "coupon" : "standard";
+
+    if (calculatorPanel) {
+        calculatorPanel.dataset.calculatorTool = nextTool;
+    }
+
+    calculatorToolButtons.forEach((button) => {
+        const selected = button.dataset.calculatorTool === nextTool;
+        button.classList.toggle("active", selected);
+        button.setAttribute("aria-pressed", selected ? "true" : "false");
+    });
+
+    try {
+        window.localStorage.setItem("cc-calculator-tool", nextTool);
+    } catch (error) {
+        // Ignore storage failures and keep the in-memory selection.
+    }
 }
 
 function calculateValue(recordHistory = false) {
@@ -244,12 +289,21 @@ function calculateCouponValue(recordHistory = false) {
         return;
     }
 
-    const discountAmount = discountType === "percent" ? (price * discountValue) / 100 : discountValue;
-    const cappedDiscount = Math.min(discountAmount, price);
-    const finalPrice = price - cappedDiscount;
+    let normalizedDiscountValue = discountValue;
+    let savings = 0;
+
+    if (discountType === "percent") {
+        normalizedDiscountValue = Math.min(Math.max(discountValue, 0), 100);
+        savings = Math.min((price * normalizedDiscountValue) / 100, price);
+    } else {
+        normalizedDiscountValue = Math.max(discountValue, 0);
+        savings = Math.min(normalizedDiscountValue, price);
+    }
+
+    const finalPrice = Math.max(price - savings, 0);
     const priceLabel = formatNumber(price);
-    const discountLabel = discountType === "percent" ? `${formatNumber(discountValue)}%` : formatNumber(discountValue);
-    const savingsLabel = formatNumber(cappedDiscount);
+    const discountLabel = discountType === "percent" ? `${formatNumber(normalizedDiscountValue)}%` : formatNumber(normalizedDiscountValue);
+    const savingsLabel = formatNumber(savings);
     const finalLabel = formatNumber(finalPrice);
 
     if (couponResult) {
@@ -317,6 +371,10 @@ function syncDropdownDisplay(select) {
 }
 
 function bindDropdown(select, dropdownRoot, toggle, label, menu) {
+    if (!select || !dropdownRoot || !toggle || !label || !menu) {
+        return;
+    }
+
     dropdownState[select.id] = { root: dropdownRoot, toggle, label, menu };
     toggle.addEventListener("click", (event) => {
         event.stopPropagation();
@@ -325,13 +383,6 @@ function bindDropdown(select, dropdownRoot, toggle, label, menu) {
         if (!isOpen) {
             dropdownRoot.classList.add("open");
             toggle.setAttribute("aria-expanded", "true");
-        }
-    });
-
-    document.addEventListener("click", (event) => {
-        if (!dropdownRoot.contains(event.target)) {
-            dropdownRoot.classList.remove("open");
-            toggle.setAttribute("aria-expanded", "false");
         }
     });
 
@@ -593,21 +644,44 @@ document.addEventListener("keydown", (event) => {
 });
 
 if (categorySelect && fromUnitSelect && toUnitSelect && valueInput && resultBox && convertButton) {
+    const calculateValueDebounced = debounce(calculateValue, 220);
+    const calculateCouponValueDebounced = debounce(calculateCouponValue, 220);
+    const convertValueDebounced = debounce(convertValue, 160);
+
     bindDropdown(categorySelect, document.getElementById("categoryDropdown"), categoryToggle, categoryLabel, document.getElementById("categoryMenu"));
     bindDropdown(fromUnitSelect, document.getElementById("fromUnitDropdown"), fromUnitToggle, fromUnitLabel, document.getElementById("fromUnitMenu"));
     bindDropdown(toUnitSelect, document.getElementById("toUnitDropdown"), toUnitToggle, toUnitLabel, document.getElementById("toUnitMenu"));
 
-    settingsButton.addEventListener("click", () => toggleSettingsWindow());
-    settingsCloseButton.addEventListener("click", () => toggleSettingsWindow(false));
-    historyButton.addEventListener("click", () => toggleHistoryWindow());
-    historyActionButton.addEventListener("click", () => toggleHistoryWindow());
-    historyCloseButton.addEventListener("click", () => toggleHistoryWindow(false));
+    if (settingsButton) {
+        settingsButton.addEventListener("click", () => toggleSettingsWindow());
+    }
+    if (settingsCloseButton) {
+        settingsCloseButton.addEventListener("click", () => toggleSettingsWindow(false));
+    }
+    if (historyButton) {
+        historyButton.addEventListener("click", () => toggleHistoryWindow());
+    }
+    if (historyActionButton) {
+        historyActionButton.addEventListener("click", () => toggleHistoryWindow());
+    }
+    if (historyCloseButton) {
+        historyCloseButton.addEventListener("click", () => toggleHistoryWindow(false));
+    }
     if (deleteHistoryButton) {
         deleteHistoryButton.addEventListener("click", clearHistory);
     }
-    helpButton.addEventListener("click", () => toggleHelpWindow());
-    helpCloseButton.addEventListener("click", () => toggleHelpWindow(false));
+    if (helpButton) {
+        helpButton.addEventListener("click", () => toggleHelpWindow());
+    }
+    if (helpCloseButton) {
+        helpCloseButton.addEventListener("click", () => toggleHelpWindow(false));
+    }
     document.addEventListener("click", (event) => {
+        const clickedInsideDropdown = Object.values(dropdownState).some((dropdown) => dropdown.root.contains(event.target));
+        if (!clickedInsideDropdown) {
+            closeDropdowns();
+        }
+
         const clickedInsideSettings = settingsWindow && settingsWindow.contains(event.target);
         const clickedInsideHistory = historyWindow && historyWindow.contains(event.target);
         const clickedInsideHelp = helpWindow && helpWindow.contains(event.target);
@@ -625,20 +699,23 @@ if (categorySelect && fromUnitSelect && toUnitSelect && valueInput && resultBox 
 
     calculatorModeButton.addEventListener("click", () => setMode("calculator"));
     converterModeButton.addEventListener("click", () => setMode("converter"));
+    calculatorToolButtons.forEach((button) => {
+        button.addEventListener("click", () => setCalculatorTool(button.dataset.calculatorTool));
+    });
     settingsThemeButtons.forEach((button) => {
         button.addEventListener("click", () => setTheme(button.dataset.theme));
     });
     calculateButton.addEventListener("click", () => calculateValue(true));
-    calculatorValue1.addEventListener("input", calculateValue);
-    calculatorValue2.addEventListener("input", calculateValue);
-    calculatorOperation.addEventListener("change", calculateValue);
+        calculatorValue1.addEventListener("input", calculateValueDebounced);
+        calculatorValue2.addEventListener("input", calculateValueDebounced);
+        calculatorOperation.addEventListener("change", calculateValueDebounced);
     updateCouponValueLabel();
     couponCalculateButton.addEventListener("click", () => calculateCouponValue(true));
-    couponPriceInput.addEventListener("input", calculateCouponValue);
-    couponValueInput.addEventListener("input", calculateCouponValue);
+        couponPriceInput.addEventListener("input", calculateCouponValueDebounced);
+        couponValueInput.addEventListener("input", calculateCouponValueDebounced);
     couponTypeSelect.addEventListener("change", () => {
         updateCouponValueLabel();
-        calculateCouponValue();
+            calculateCouponValueDebounced();
     });
 
     populateCategories();
@@ -650,16 +727,19 @@ if (categorySelect && fromUnitSelect && toUnitSelect && valueInput && resultBox 
     });
 
     convertButton.addEventListener("click", convertAndRecordHistory);
-    valueInput.addEventListener("input", convertValue);
-    fromUnitSelect.addEventListener("change", convertValue);
-    toUnitSelect.addEventListener("change", convertValue);
+    valueInput.addEventListener("input", convertValueDebounced);
+    fromUnitSelect.addEventListener("change", convertValueDebounced);
+    toUnitSelect.addEventListener("change", convertValueDebounced);
 
     const storedTheme = getStoredTheme();
     applyTheme(storedTheme);
     toggleSettingsWindow(getStoredSettingsOpen());
-    settingsButton.setAttribute("aria-expanded", String(settingsWindow.classList.contains("open")));
+    if (settingsButton && settingsWindow) {
+        settingsButton.setAttribute("aria-expanded", String(settingsWindow.classList.contains("open")));
+    }
     loadHistory();
     setMode("calculator");
+    setCalculatorTool(getStoredCalculatorTool());
     calculateValue();
     calculateCouponValue();
     convertValue();

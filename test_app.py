@@ -56,6 +56,19 @@ class AppTests(unittest.TestCase):
         with self.assertRaises(ZeroDivisionError):
             main.evaluate_calculation(10, 0, "divide")
 
+    def test_coupon_helper_applies_realistic_discount_limits(self):
+        self.assertEqual(main.calculate_coupon_result(100, 10, "percent"), (90.0, 10.0))
+        self.assertEqual(main.calculate_coupon_result(100, 150, "percent"), (0.0, 100.0))
+        self.assertEqual(main.calculate_coupon_result(100, 150, "amount"), (0.0, 100.0))
+        self.assertEqual(main.calculate_coupon_result(100, 0, "percent"), (100.0, 0.0))
+
+        with self.assertRaises(ValueError):
+            main.calculate_coupon_result(-5, 10, "percent")
+        with self.assertRaises(ValueError):
+            main.calculate_coupon_result(100, -5, "percent")
+        with self.assertRaises(ValueError):
+            main.calculate_coupon_result(100, 10, "unknown")
+
     def test_conversion_helper_matches_reference_values(self):
         self.assertAlmostEqual(main.convert_value(1, "Length", "Meter", "Foot"), 3.280839895013123)
         self.assertAlmostEqual(main.convert_value(1, "Time", "Hour", "Minute"), 60)
