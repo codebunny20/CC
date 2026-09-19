@@ -13,5 +13,45 @@
     "value": "1 Fahrenheit to Celsius",
     "result": "1 Fahrenheit = -17.22222222 Celsius",
     "timestamp": "9/13/2026, 10:29:49 PM"
+  },
+  {
+    "value": "Coupon: 100 with 10% off",
+    "result": "Final price 90 (saved 10)",
+    "timestamp": "9/18/2026, 12:52:16 AM"
+  },
+  {
+    "value": "Coupon: 101 with 10% off",
+    "result": "Final price 90.9 (saved 10.1)",
+    "timestamp": "9/18/2026, 12:52:33 AM"
+  },
+  {
+    "value": "Coupon: 102 with 10% off",
+    "result": "Final price 91.8 (saved 10.2)",
+    "timestamp": "9/18/2026, 12:52:34 AM"
+  },
+  {
+    "value": "Coupon: 5 with 10% off",
+    "result": "Final price 4.5 (saved 0.5)",
+    "timestamp": "9/18/2026, 12:52:42 AM"
+  },
+  {
+    "value": "Coupon: 50 with 10% off",
+    "result": "Final price 45 (saved 5)",
+    "timestamp": "9/18/2026, 12:52:43 AM"
+  },
+  {
+    "value": "Coupon: 500 with 10% off",
+    "result": "Final price 450 (saved 50)",
+    "timestamp": "9/18/2026, 12:52:43 AM"
+  },
+  {
+    "value": "Coupon: 500 with 1% off",
+    "result": "Final price 495 (saved 5)",
+    "timestamp": "9/18/2026, 12:54:08 AM"
+  },
+  {
+    "value": "Coupon: 500 with 13% off",
+    "result": "Final price 435 (saved 65)",
+    "timestamp": "9/18/2026, 12:54:08 AM"
   }
 ]

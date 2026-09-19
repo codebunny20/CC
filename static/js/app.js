@@ -30,6 +30,12 @@ const calculatorValue2 = document.getElementById("calculatorValue2");
 const calculatorOperation = document.getElementById("calculatorOperation");
 const calculateButton = document.getElementById("calculateButton");
 const calculatorResult = document.getElementById("calculatorResult");
+const couponPriceInput = document.getElementById("couponPrice");
+const couponTypeSelect = document.getElementById("couponType");
+const couponValueInput = document.getElementById("couponValue");
+const couponValueLabel = document.getElementById("couponValueLabel");
+const couponCalculateButton = document.getElementById("couponCalculateButton");
+const couponResult = document.getElementById("couponResult");
 
 const categorySelect = document.getElementById("category");
 const fromUnitSelect = document.getElementById("fromUnit");
@@ -172,6 +178,7 @@ function setMode(mode) {
     appShell.dataset.mode = mode;
     calculatorModeButton.classList.toggle("active", mode === "calculator");
     converterModeButton.classList.toggle("active", mode === "converter");
+    closeDropdowns();
 }
 
 function calculateValue(recordHistory = false) {
@@ -214,6 +221,43 @@ function calculateValue(recordHistory = false) {
 
     if (recordHistory) {
         saveHistoryEntry(`Calculation: ${expression}`, `${expression} = ${formattedResult}`);
+    }
+}
+
+function updateCouponValueLabel() {
+    if (!couponValueLabel || !couponTypeSelect) {
+        return;
+    }
+
+    couponValueLabel.textContent = couponTypeSelect.value === "percent" ? "Coupon value (%)" : "Coupon value";
+}
+
+function calculateCouponValue(recordHistory = false) {
+    const price = readNumericInput(couponPriceInput);
+    const discountValue = readNumericInput(couponValueInput);
+    const discountType = couponTypeSelect ? couponTypeSelect.value : "percent";
+
+    if (Number.isNaN(price) || Number.isNaN(discountValue) || price < 0 || discountValue < 0) {
+        if (couponResult) {
+            couponResult.innerHTML = "<strong>Result unavailable</strong><p>Enter a valid price and non-negative discount.</p>";
+        }
+        return;
+    }
+
+    const discountAmount = discountType === "percent" ? (price * discountValue) / 100 : discountValue;
+    const cappedDiscount = Math.min(discountAmount, price);
+    const finalPrice = price - cappedDiscount;
+    const priceLabel = formatNumber(price);
+    const discountLabel = discountType === "percent" ? `${formatNumber(discountValue)}%` : formatNumber(discountValue);
+    const savingsLabel = formatNumber(cappedDiscount);
+    const finalLabel = formatNumber(finalPrice);
+
+    if (couponResult) {
+        couponResult.innerHTML = `<strong>${finalLabel}</strong><p>${priceLabel} with ${discountLabel} off saves ${savingsLabel} and costs ${finalLabel}.</p>`;
+    }
+
+    if (recordHistory) {
+        saveHistoryEntry(`Coupon: ${priceLabel} with ${discountLabel} off`, `Final price ${finalLabel} (saved ${savingsLabel})`);
     }
 }
 
@@ -537,6 +581,17 @@ function populateCategories() {
     setOptions(categorySelect, categories);
 }
 
+document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") {
+        return;
+    }
+
+    closeDropdowns();
+    toggleSettingsWindow(false);
+    toggleHistoryWindow(false);
+    toggleHelpWindow(false);
+});
+
 if (categorySelect && fromUnitSelect && toUnitSelect && valueInput && resultBox && convertButton) {
     bindDropdown(categorySelect, document.getElementById("categoryDropdown"), categoryToggle, categoryLabel, document.getElementById("categoryMenu"));
     bindDropdown(fromUnitSelect, document.getElementById("fromUnitDropdown"), fromUnitToggle, fromUnitLabel, document.getElementById("fromUnitMenu"));
@@ -577,6 +632,14 @@ if (categorySelect && fromUnitSelect && toUnitSelect && valueInput && resultBox 
     calculatorValue1.addEventListener("input", calculateValue);
     calculatorValue2.addEventListener("input", calculateValue);
     calculatorOperation.addEventListener("change", calculateValue);
+    updateCouponValueLabel();
+    couponCalculateButton.addEventListener("click", () => calculateCouponValue(true));
+    couponPriceInput.addEventListener("input", calculateCouponValue);
+    couponValueInput.addEventListener("input", calculateCouponValue);
+    couponTypeSelect.addEventListener("change", () => {
+        updateCouponValueLabel();
+        calculateCouponValue();
+    });
 
     populateCategories();
     updateUnitSelectors();
@@ -596,8 +659,9 @@ if (categorySelect && fromUnitSelect && toUnitSelect && valueInput && resultBox 
     toggleSettingsWindow(getStoredSettingsOpen());
     settingsButton.setAttribute("aria-expanded", String(settingsWindow.classList.contains("open")));
     loadHistory();
-    setMode("converter");
+    setMode("calculator");
     calculateValue();
+    calculateCouponValue();
     convertValue();
 
     if (window.matchMedia) {
